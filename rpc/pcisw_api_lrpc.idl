@@ -1,0 +1,23 @@
+/*!
+ * Adnacom API RPC interface definition.
+ * /date 2026.05.20
+ * \copyright Copyright 2026 Adnacom Inc.
+ */
+import "objidl.idl";
+import "oaidl.idl";
+
+
+[uuid(26AA8DE6-8183-4F42-B742-2CBA42DD6F3B), pointer_default(unique),
+ helpstring("Adnacom PCI Host Adapter API service")]
+interface PciswApiServiceInterface
+{
+	typedef [context_handle] void* PCONTEXT_HANDLE_TYPE;
+
+	HRESULT PciswGetProtocolVersion([out] unsigned* protocolVersion);
+
+	HRESULT PciswGetAdapterIds([out] SAFEARRAY(BSTR)* adapterIds);
+	HRESULT PciswGetAdapterPorts([in] BSTR adapterId, [out] SAFEARRAY(BSTR)* portIds);
+	HRESULT PciswGetPortInfo([in] BSTR portPath, unsigned infoType, [in, out] unsigned* outBufferSize, [out, size_is(, *outBufferSize)] byte** outBuffer);
+
+	/// ^^^ RPC Interface Version 1 ^^^
+};

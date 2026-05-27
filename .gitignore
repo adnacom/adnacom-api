@@ -1,0 +1,45 @@
+# Thumbnails created by Windows.
+Thumbs.db
+
+# Files created and used by Visual Studio.
+*.obj
+*.exe
+*.pdb
+*.user
+*.aps
+*.pch
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+[Bb]in
+*[Dd]ebug*/
+*.lib
+*.sbr
+obj/
+[Rr]elease*/
+_ReSharper*/
+[Tt]est[Rr]esult*
+
+# VS2010
+ipch/*
+*.sdf
+*.opensdf
+
+# VS2015+
+.vs*/
+*.VC.db
+*.opendb
+
+# Build output and intermediate build data.
+.temp*/
+Win*Debug*/
+Win*Release*/
+

@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="demo/demo.vcxproj" Id="2645f889-9067-4d42-837f-14bb3f39152f" />
+  <Project Path="libpciswapi/pcisw-api.vcxproj" Id="7b707c6e-5aa7-40ac-9bde-ceb887e04f53" />
+</Solution>
