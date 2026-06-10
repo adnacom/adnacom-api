@@ -20,4 +20,6 @@ interface PciswApiServiceInterface
 	HRESULT PciswGetPortInfo([in] BSTR portPath, unsigned infoType, [in, out] unsigned* outBufferSize, [out, size_is(, *outBufferSize)] byte** outBuffer);
 
 	/// ^^^ RPC Interface Version 1 ^^^
+
+	static unsigned PciswApiRpcProtocolVersion = 1;
 };
