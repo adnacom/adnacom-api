@@ -21,6 +21,18 @@ namespace Adnacom::Api {;
  */
 using HostAdapterId = std::string;
 
+
+enum class HostAdapterBoardType : uint8_t
+{
+	Unknown = 0,
+	H18 = 1,
+	R34 = 2, //!< R34 is a remote-only board.
+	H14 = 3,
+	H12 = 4,
+	H3 = 5,
+};
+
+
 /*!
  * Describes available types of Host Adapter Port properties used in `HostAdapter::GetPortInfo()`.
  */
@@ -56,6 +68,12 @@ public:
 	 * \returns [int] - Port count (upstream and downstream). Returns negative value in case of error (e.g. invalid adapter ID).
 	 */
 	int GetPortCount() const;
+
+	/*!
+	 * Returns number of available ports on the adapter.
+	 * \returns [int] - Port count (upstream and downstream). Returns negative value in case of error (e.g. invalid adapter ID).
+	 */
+	HostAdapterBoardType GetBoardType() const;
 
 	/*!
 	 * Reads adapter port's property value.

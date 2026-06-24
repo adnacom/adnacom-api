@@ -153,6 +153,7 @@ HRESULT LrpcConnect()
 
 	Gl.bindHandle = bindHandle;
 	trace("IPC connection created! BindHandle %p", bindHandle);
+
 	return S_OK;
 }
 
@@ -177,6 +178,19 @@ HRESULT ApiGetPortInfo(const wchar_t* portPath, unsigned infoType, byte*& outBuf
 	auto pathBstr = ::SysAllocString(portPath);
 	HRESULT hr = Gl.rpcCall(PciswGetPortInfo, pathBstr, infoType, &outBufferSize, &outBuffer);
 	::SysFreeString(pathBstr);
+	return hr;
+}
+
+HRESULT ApiGetBoardType(const wchar_t* adapterId, std::string& outBoardTypeString)
+{
+	auto pathBstr = ::SysAllocString(adapterId);
+	BSTR boardTypeBstr = nullptr;
+	HRESULT hr = Gl.rpcCall(PciswGetAdapterBoardType, pathBstr, &boardTypeBstr);
+	::SysFreeString(pathBstr);
+	if (boardTypeBstr) {
+		outBoardTypeString = bstr2string(boardTypeBstr);
+		::SysFreeString(boardTypeBstr);
+	}
 	return hr;
 }
 
@@ -498,6 +512,31 @@ bool HostAdapter::GetPortInfo(int portIndex, HostAdapterPortProperty infoType, v
 	LrpcFreeMemory(info);
 
 	return succeeded;
+}
+
+HostAdapterBoardType HostAdapter::GetBoardType() const
+{
+	std::string boardString;
+	HRESULT hr = ApiGetBoardType(string2ws(id_).c_str(), boardString);
+	if (FAILED(hr))
+		return HostAdapterBoardType::Unknown;
+
+	using enum HostAdapterBoardType;
+	constexpr std::pair<const char*, HostAdapterBoardType> boardTypeMap [] {
+		{"H18", H18},
+		{"R34", R34},
+		{"H14", H14},
+		{"H12", H12},
+		{"H3", H3},
+	};
+
+	for (const auto& e : boardTypeMap) {
+		if (boardString == e.first)
+			return e.second;
+	}
+
+	// Couldn't match the board ID.
+	return HostAdapterBoardType::Unknown;
 }
 
 } // Adnacom::Api namespace

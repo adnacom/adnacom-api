@@ -6,7 +6,6 @@
 import "objidl.idl";
 import "oaidl.idl";
 
-
 [uuid(26AA8DE6-8183-4F42-B742-2CBA42DD6F3B), pointer_default(unique),
  helpstring("Adnacom PCI Host Adapter API service")]
 interface PciswApiServiceInterface
@@ -20,6 +19,8 @@ interface PciswApiServiceInterface
 	HRESULT PciswGetPortInfo([in] BSTR portPath, unsigned infoType, [in, out] unsigned* outBufferSize, [out, size_is(, *outBufferSize)] byte** outBuffer);
 
 	/// ^^^ RPC Interface Version 1 ^^^
+
+	HRESULT PciswGetAdapterBoardType([in] BSTR adapterId, [out] BSTR* outBoardType);
 
 	static unsigned PciswApiRpcProtocolVersion = 1;
 };
