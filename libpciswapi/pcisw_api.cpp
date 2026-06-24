@@ -181,6 +181,14 @@ HRESULT ApiGetPortInfo(const wchar_t* portPath, unsigned infoType, byte*& outBuf
 	return hr;
 }
 
+HRESULT ApiGetPortInfoByIndex(const wchar_t* adapterId, unsigned portIndex, unsigned infoType, byte*& outBuffer, unsigned& outBufferSize)
+{
+	auto pathBstr = ::SysAllocString(adapterId);
+	HRESULT hr = Gl.rpcCall(PciswGetPortInfoByIndex, pathBstr, portIndex, infoType, &outBufferSize, &outBuffer);
+	::SysFreeString(pathBstr);
+	return hr;
+}
+
 HRESULT ApiGetBoardType(const wchar_t* adapterId, std::string& outBoardTypeString)
 {
 	auto pathBstr = ::SysAllocString(adapterId);
@@ -472,11 +480,23 @@ int HostAdapter::GetPortCount() const
 	return  static_cast<int>(result->size());
 }
 
+bool copyResultToBuffer_(void* dst, uint32_t& dstSize, const void* src, uint32_t srcSize)
+{
+	if (dst && dstSize >= srcSize) {
+		memcpy(dst, src, srcSize);
+		dstSize = srcSize;
+		return true;
+	}
+
+	// Write minimum required buffer size to `dstSize`.
+	dstSize = srcSize;
+	return false;
+}
+
 bool HostAdapter::GetPortInfo(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
 {
 	auto result = Ipc::getAdPorts_(string2ws(id_).c_str());
-
-	if (!result) {
+		if (!result) {
 		traceErr("GetPortInfo: failed to enumerate ports! Error %d", result.error());
 		return false;
 	}
@@ -491,23 +511,24 @@ bool HostAdapter::GetPortInfo(int portIndex, HostAdapterPortProperty infoType, v
 		return false;
 	}
 
-	const auto& portId = ports[portIndex];
-
 	byte* info = nullptr;
 	unsigned infoSize = bufferSize;
-	HRESULT hr = ApiGetPortInfo(string2ws(portId).c_str(), static_cast<unsigned>(infoType), info, infoSize);
+	HRESULT hr = ApiGetPortInfoByIndex(string2ws(id_).c_str(), portIndex, static_cast<unsigned>(infoType), info, infoSize);
+	if (SUCCEEDED(hr)) {
+		// v2 API is available. Good!
+		trace("GetPortInfo(): got port info by index %d", portIndex);
+	} else {
+		const auto& portId = ports[portIndex];
+		hr = ApiGetPortInfo(string2ws(portId).c_str(), static_cast<unsigned>(infoType), info, infoSize);
+		trace("GetPortInfo(): got port info by path %s", portId.c_str());
+	}
+
 	if (FAILED(hr) || !info) {
 		traceErr("GetPortInfo(index %d) -> %#x", portIndex, hr);
 		return false;
 	}
 
-	bool succeeded = false;
-	if (outBuffer && bufferSize >= infoSize) {
-		memcpy(outBuffer, info, infoSize);
-		succeeded = true;
-	} else {
-		bufferSize = infoSize;
-	}
+	bool succeeded = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
 
 	LrpcFreeMemory(info);
 
