@@ -24,22 +24,22 @@ int main(int argc, char* argv[])
 	std::println("Available Host Adapters:");
 
 	for (auto& id : adapterIds) {
-		std::println("> {} -- {} ports", id, HostAdapter{id}.GetPortCount());
-	}
+		// Create a Host Adapter object for each adapter.
+		HostAdapter ad{ adapterIds.front() };
+		auto boardType = ad.GetBoardType();
+		std::println("> {} [{}] -- {} ports", id, AsString(boardType), HostAdapter{id}.GetPortCount());
 
-	// Create a Host Adapter object for the first available adapter.
-	HostAdapter ad{ adapterIds.front() };
-
-	// Iterate over adapter's ports and print link speed for each of them.
-	for (int i = 0; i < ad.GetPortCount(); ++i) {
-		// This variable will be used as an output buffer for `HostAdapter::GetPortInfo()`.
-		HostAdapterPortStatus status{};
-		unsigned bufferSize = sizeof status;
-		auto succeeded = ad.GetPortInfo(i, HostAdapterPortProperty::PortStatus, &status, bufferSize);
-		if (succeeded)
-			std::println(">> port {}: link @ {} {}", i, (int)status.negotiatedLinkSpeed, (int)status.negotiatedLinkWidth);
-		else
-			std::println(">> port {}: [!] ERROR", i);
+		// Iterate over adapter's ports and print link speed for each of them.
+		for (int i = 0; i < ad.GetPortCount(); ++i) {
+			// This variable will be used as an output buffer for `HostAdapter::GetPortInfo()`.
+			HostAdapterPortStatus status{};
+			unsigned bufferSize = sizeof status;
+			auto succeeded = ad.GetPortInfo(i, HostAdapterPortProperty::PortStatus, &status, bufferSize);
+			if (succeeded)
+				std::println(">> port {}: link @ {} {}", i, (int)status.negotiatedLinkSpeed, (int)status.negotiatedLinkWidth);
+			else
+				std::println(">> port {}: [!] ERROR", i);
+		}
 	}
 
 	return 0;

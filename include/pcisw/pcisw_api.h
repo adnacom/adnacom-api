@@ -132,4 +132,23 @@ static_assert(sizeof(HostAdapterPortStatus) == 0x20);
 #pragma pack(pop)
 
 
+// FORMATTING HELPERS
+
+constexpr
+const char* AsString(HostAdapterBoardType boardType)
+{
+	using enum HostAdapterBoardType;
+	switch (boardType) {
+	case Unknown: return "unknown";
+	case H18: return "H18";
+	case R34: return "R34";
+	case H14: return "H14";
+	case H12: return "H12";
+	case H3: return "H3";
+	default:
+		return "<unknown>";
+	}
+}
+
+
 } // Adnacom::Api namespace
