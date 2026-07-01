@@ -453,33 +453,6 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 
 } // Ipc namespace
 
-
-/// \region API Implementation
-
-namespace Adnacom::Api {;
-
-
-/*static*/
-std::vector<HostAdapterId> HostAdapter::GetAdapterIds()
-{
-	return Ipc::getAdIds_().value_or({}); // Return empty vector on error.
-}
-
-HostAdapter::HostAdapter(const HostAdapterId& id) : id_{id}
-{
-}
-
-int HostAdapter::GetPortCount() const
-{
-	auto result = Ipc::getAdPorts_(string2ws(id_).c_str());
-	if (!result.has_value()) {
-		traceErr("GetAdapters() -> %d", result.error());
-		return -1;
-	}
-
-	return  static_cast<int>(result->size());
-}
-
 bool copyResultToBuffer_(void* dst, uint32_t& dstSize, const void* src, uint32_t srcSize)
 {
 	if (dst && dstSize >= srcSize) {
@@ -493,71 +466,165 @@ bool copyResultToBuffer_(void* dst, uint32_t& dstSize, const void* src, uint32_t
 	return false;
 }
 
-bool HostAdapter::GetPortInfo(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
+/// \region API Implementation
+
+namespace Adnacom::Api {;
+
+
+/*static*/
+std::vector<HostAdapterId> HostAdapter::GetAdapterIds()
 {
-	auto result = Ipc::getAdPorts_(string2ws(id_).c_str());
+	return Ipc::getAdIds_().value_or({}); // Return empty vector on error.
+}
+
+struct HostAdapter::Impl
+{
+	Impl(const HostAdapterId& id) : myid_{ string2ws(id) }
+	{
+	}
+	Impl(const HostAdapter::Impl&) = default;
+	Impl(Impl&&) = default;
+
+	int GetPortCount() const
+	{
+		auto result = Ipc::getAdPorts_(myid_.c_str());
+		if (!result.has_value()) {
+			traceErr("GetAdapters() -> %d", result.error());
+			return -1;
+		}
+
+		return static_cast<int>(result->size());
+	}
+
+	bool GetPortInfo(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
+	{
+		auto result = Ipc::getAdPorts_(myid_.c_str());
 		if (!result) {
-		traceErr("GetPortInfo: failed to enumerate ports! Error %d", result.error());
-		return false;
+			traceErr("GetPortInfo: failed to enumerate ports! Error %d", result.error());
+			return false;
+		}
+		auto& ports = *result;
+		if (ports.empty()) {
+			traceErr("GetPortInfo: no ports on adapter '%ws'", myid_.c_str());
+			return false;
+		}
+
+		if (portIndex >= (int)ports.size()) {
+			traceErr("GetPortInfo(): invalid port index %d; port count: %d", portIndex, (int)ports.size());
+			return false;
+		}
+
+		byte* info = nullptr;
+		unsigned infoSize = bufferSize;
+		HRESULT hr = ApiGetPortInfoByIndex(myid_.c_str(), portIndex, static_cast<unsigned>(infoType), info, infoSize);
+		if (SUCCEEDED(hr)) {
+			// v2 API is available. Good!
+			trace("GetPortInfo(): got port info by index %d", portIndex);
+		} else {
+			const auto& portId = ports[portIndex];
+			hr = ApiGetPortInfo(string2ws(portId).c_str(), static_cast<unsigned>(infoType), info, infoSize);
+			trace("GetPortInfo(): got port info by path %ws", portId.c_str());
+		}
+
+		if (FAILED(hr) || !info) {
+			traceErr("GetPortInfo(index %d) -> %#x", portIndex, hr);
+			return false;
+		}
+
+		bool succeeded = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
+
+		LrpcFreeMemory(info);
+
+		return succeeded;
 	}
-	auto& ports = *result;
-	if (ports.empty()) {
-		traceErr("GetPortInfo: no ports on adapter '%s'", id_.c_str());
-		return false;
+
+	HostAdapterBoardType GetBoardType() const
+	{
+		std::string boardString;
+		HRESULT hr = ApiGetBoardType(myid_.c_str(), boardString);
+		if (FAILED(hr))
+			return HostAdapterBoardType::Unknown;
+
+		using enum HostAdapterBoardType;
+		constexpr std::pair<const char*, HostAdapterBoardType> boardTypeMap[]{
+			{"H18", H18},
+			{"R34", R34},
+			{"H14", H14},
+			{"H12", H12},
+			{"H3", H3},
+		};
+
+		for (const auto& e : boardTypeMap) {
+			if (boardString == e.first)
+				return e.second;
+		}
+
+		// Couldn't match the board ID.
+		return HostAdapterBoardType::Unknown;
 	}
 
-	if (portIndex >= (int)ports.size()) {
-		traceErr("GetPortInfo(): invalid port index %d; port count: %d", portIndex, (int)ports.size());
-		return false;
+protected:
+	std::wstring myid_;
+};
+
+HostAdapter::HostAdapter(const HostAdapterId& id) : impl_{new Impl(id)} { }
+
+HostAdapter::HostAdapter(const HostAdapter& other) : impl_{other.impl_ ? new Impl(*other.impl_) : nullptr} { }
+HostAdapter::HostAdapter(HostAdapter&& other) : impl_{other.impl_}
+{
+	// "Steal" impl from other.
+	other.impl_ = nullptr;
+}
+
+HostAdapter::~HostAdapter()
+{
+	delete impl_;
+}
+
+HostAdapter& HostAdapter::operator=(const HostAdapter& other)
+{
+	if (this != &other) {
+		if (impl_)
+			delete impl_;
+		impl_ = nullptr;
+		if (other.impl_)
+			impl_ = new Impl(*other.impl_);
 	}
+	return *this;
+}
 
-	byte* info = nullptr;
-	unsigned infoSize = bufferSize;
-	HRESULT hr = ApiGetPortInfoByIndex(string2ws(id_).c_str(), portIndex, static_cast<unsigned>(infoType), info, infoSize);
-	if (SUCCEEDED(hr)) {
-		// v2 API is available. Good!
-		trace("GetPortInfo(): got port info by index %d", portIndex);
-	} else {
-		const auto& portId = ports[portIndex];
-		hr = ApiGetPortInfo(string2ws(portId).c_str(), static_cast<unsigned>(infoType), info, infoSize);
-		trace("GetPortInfo(): got port info by path %s", portId.c_str());
+HostAdapter& HostAdapter::operator=(HostAdapter&& other)
+{
+	if (this != &other) {
+		if (impl_)
+			delete impl_;
+		impl_ = other.impl_;
+		other.impl_ = nullptr;
 	}
+	return *this;
+}
 
-	if (FAILED(hr) || !info) {
-		traceErr("GetPortInfo(index %d) -> %#x", portIndex, hr);
-		return false;
-	}
-
-	bool succeeded = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
-
-	LrpcFreeMemory(info);
-
-	return succeeded;
+int HostAdapter::GetPortCount() const
+{
+	if (!impl_)
+		return -1;
+	return impl_->GetPortCount();
 }
 
 HostAdapterBoardType HostAdapter::GetBoardType() const
 {
-	std::string boardString;
-	HRESULT hr = ApiGetBoardType(string2ws(id_).c_str(), boardString);
-	if (FAILED(hr))
+	if (!impl_)
 		return HostAdapterBoardType::Unknown;
+	return impl_->GetBoardType();
+}
 
-	using enum HostAdapterBoardType;
-	constexpr std::pair<const char*, HostAdapterBoardType> boardTypeMap [] {
-		{"H18", H18},
-		{"R34", R34},
-		{"H14", H14},
-		{"H12", H12},
-		{"H3", H3},
-	};
+bool HostAdapter::GetPortInfo(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
+{
+	if (!impl_)
+		return false;
 
-	for (const auto& e : boardTypeMap) {
-		if (boardString == e.first)
-			return e.second;
-	}
-
-	// Couldn't match the board ID.
-	return HostAdapterBoardType::Unknown;
+	return impl_->GetPortInfo(portIndex, infoType, outBuffer, bufferSize);
+	
 }
 
 } // Adnacom::Api namespace

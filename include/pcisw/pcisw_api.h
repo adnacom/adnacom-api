@@ -46,7 +46,7 @@ enum class HostAdapterPortProperty
 /*!
  * Describes an Adnacom Host Adapter instance.
  */
-class HostAdapter
+class HostAdapter final
 {
 public /*static*/:
 	/*!
@@ -61,7 +61,13 @@ public:
 	 * \param[in] id Host Adapter ID. \see `HostAdapterId`
 	 */
 	HostAdapter(const HostAdapterId& id);
-	virtual ~HostAdapter() = default;
+	~HostAdapter();
+
+	// Copy/move
+	HostAdapter(const HostAdapter& other);
+	HostAdapter(HostAdapter&& other);
+	HostAdapter& operator=(const HostAdapter& other);
+	HostAdapter& operator=(HostAdapter&& other);
 
 	/*!
 	 * Returns number of available ports on the adapter.
@@ -87,7 +93,8 @@ public:
 	bool GetPortInfo(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize);
 
 protected:
-	HostAdapterId id_;
+	struct Impl;
+	Impl* impl_ = nullptr;
 };
 
 
