@@ -24,6 +24,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\pcisw\pcisw_api.h" />
+    <ClInclude Include="..\include\pcisw\pcisw_defs.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="..\rpc\pcisw_api_lrpc.idl" />
