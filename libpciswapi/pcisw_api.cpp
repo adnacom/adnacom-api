@@ -181,6 +181,14 @@ HRESULT ApiGetPortInfo(const wchar_t* portPath, unsigned infoType, byte*& outBuf
 	return hr;
 }
 
+HRESULT ApiGetAdapterProperty(const wchar_t* adapterId, unsigned infoType, byte*& outBuffer, unsigned& outBufferSize)
+{
+	auto pathBstr = ::SysAllocString(adapterId);
+	HRESULT hr = Gl.rpcCall(PciswGetAdapterProperty, pathBstr, infoType, &outBufferSize, &outBuffer);
+	::SysFreeString(pathBstr);
+	return hr;
+}
+
 HRESULT ApiGetPortInfoByIndex(const wchar_t* adapterId, unsigned portIndex, unsigned infoType, byte*& outBuffer, unsigned& outBufferSize)
 {
 	auto pathBstr = ::SysAllocString(adapterId);
@@ -538,15 +546,32 @@ struct HostAdapter::Impl
 		return succeeded;
 	}
 
-	HostAdapterBoardType GetBoardType() const
+	bool GetProperty(HostAdapterProperty infoType, void* outBuffer, uint32_t& bufferSize)
+	{
+		byte* info = nullptr;
+		unsigned infoSize = bufferSize;
+		HRESULT hr = ApiGetAdapterProperty(myid_.c_str(), static_cast<unsigned>(infoType), info, infoSize);
+		if (FAILED(hr) || !info) {
+			traceErr("GetAdProperty('%ws') -> %#x", id_(), hr);
+			return false;
+		}
+
+		bool succeeded = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
+
+		LrpcFreeMemory(info);
+
+		return succeeded;
+	}
+
+	AdapterBoardType GetBoardType() const
 	{
 		std::string boardString;
 		HRESULT hr = ApiGetBoardType(myid_.c_str(), boardString);
 		if (FAILED(hr))
-			return HostAdapterBoardType::Unknown;
+			return AdapterBoardType::Unknown;
 
-		using enum HostAdapterBoardType;
-		constexpr std::pair<const char*, HostAdapterBoardType> boardTypeMap[]{
+		using enum AdapterBoardType;
+		constexpr std::pair<const char*, AdapterBoardType> boardTypeMap[] {
 			{"H18", H18},
 			{"R34", R34},
 			{"H14", H14},
@@ -560,11 +585,13 @@ struct HostAdapter::Impl
 		}
 
 		// Couldn't match the board ID.
-		return HostAdapterBoardType::Unknown;
+		return AdapterBoardType::Unknown;
 	}
 
 protected:
 	std::wstring myid_;
+
+	const wchar_t* id_() { return myid_.c_str(); }
 };
 
 HostAdapter::HostAdapter(const HostAdapterId& id) : impl_{new Impl(id)} { }
@@ -611,20 +638,27 @@ int HostAdapter::GetPortCount() const
 	return impl_->GetPortCount();
 }
 
-HostAdapterBoardType HostAdapter::GetBoardType() const
+AdapterBoardType HostAdapter::GetBoardType() const
 {
 	if (!impl_)
-		return HostAdapterBoardType::Unknown;
+		return AdapterBoardType::Unknown;
 	return impl_->GetBoardType();
 }
 
-bool HostAdapter::GetPortInfo(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
+bool HostAdapter::GetPortProperty(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
 {
 	if (!impl_)
 		return false;
 
 	return impl_->GetPortInfo(portIndex, infoType, outBuffer, bufferSize);
-	
+}
+
+bool HostAdapter::GetProperty(HostAdapterProperty infoType, void* outBuffer, uint32_t& bufferSize)
+{
+	if (!impl_)
+		return false;
+
+	return impl_->GetProperty(infoType, outBuffer, bufferSize);
 }
 
 } // Adnacom::Api namespace

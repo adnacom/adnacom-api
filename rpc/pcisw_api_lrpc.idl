@@ -21,6 +21,7 @@ interface PciswApiServiceInterface
 	/// ^^^ RPC Interface Version 1 ^^^
 	HRESULT PciswGetPortInfoByIndex([in] BSTR adapterId, unsigned portIndex, unsigned infoType, [in, out] unsigned* outBufferSize, [out, size_is(, *outBufferSize)] byte** outBuffer);
 
+	HRESULT PciswGetAdapterProperty([in] BSTR adapterId, unsigned propertyType, [in, out] unsigned* outBufferSize, [out, size_is(, *outBufferSize)] byte** outBuffer);
 	HRESULT PciswGetAdapterBoardType([in] BSTR adapterId, [out] BSTR* outBoardType);
 
 	/// ^^^ RPC Interface Version 2 ^^^

@@ -60,18 +60,34 @@ public:
 	 * Returns number of available ports on the adapter.
 	 * \returns [int] - Port count (upstream and downstream). Returns negative value in case of error (e.g. invalid adapter ID).
 	 */
-	HostAdapterBoardType GetBoardType() const;
+	AdapterBoardType GetBoardType() const;
 
 	/*!
-	 * Reads adapter port's property value.
-	 * \param[in] portIndex - Port index. Should not exceed the value returned by `GetPortCount()`.
-	 * \param[in] infoType - Type of property to be retrieved, \see `HostAdapterPortProperty`.
+	 * Reads adapter's property value.
+	 * \param[in] propertyType - Type of property to be retrieved, \see `HostAdapterProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
 	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes. On output: number of bytes written to the output buffer.
 	 *		If the output buffer is too small to hold the data, `bufferSize` will contain the minimum required size of an output buffer.
 	 * \returns [bool] - `true` on success, `false` on error.
 	 */
-	bool GetPortInfo(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize);
+	bool GetProperty(HostAdapterProperty propertyType, void* outBuffer, uint32_t& bufferSize);
+
+	/*!
+	 * Reads adapter port's property value.
+	 * \param[in] portIndex - Port index. Should not exceed the value returned by `GetPortCount()`.
+	 * \param[in] propertyType - Type of property to be retrieved, \see `HostAdapterPortProperty`.
+	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
+	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes. On output: number of bytes written to the output buffer.
+	 *		If the output buffer is too small to hold the data, `bufferSize` will contain the minimum required size of an output buffer.
+	 * \returns [bool] - `true` on success, `false` on error.
+	 */
+	bool GetPortProperty(int portIndex, HostAdapterPortProperty propertyType, void* outBuffer, uint32_t& bufferSize);
+
+	// Deprecated: use `GetPortProperty()` instead.
+	bool GetPortInfo(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
+	{
+		return GetPortProperty(portIndex, infoType, outBuffer, bufferSize);
+	}
 
 protected:
 	struct Impl;
