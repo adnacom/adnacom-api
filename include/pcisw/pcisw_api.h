@@ -70,7 +70,7 @@ public:
 	 *		If the output buffer is too small to hold the data, `bufferSize` will contain the minimum required size of an output buffer.
 	 * \returns [bool] - `true` on success, `false` on error.
 	 */
-	bool GetProperty(HostAdapterProperty propertyType, void* outBuffer, uint32_t& bufferSize);
+	bool GetAdapterProperty(HostAdapterProperty propertyType, void* outBuffer, uint32_t& bufferSize);
 
 	/*!
 	 * Reads adapter port's property value.
