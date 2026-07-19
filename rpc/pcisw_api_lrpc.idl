@@ -24,6 +24,8 @@ interface PciswApiServiceInterface
 	HRESULT PciswGetAdapterProperty([in] BSTR adapterId, unsigned propertyType, [in, out] unsigned* outBufferSize, [out, size_is(, *outBufferSize)] byte** outBuffer);
 	HRESULT PciswGetAdapterBoardType([in] BSTR adapterId, [out] BSTR* outBoardType);
 
+	HRESULT PciswGetTransceiverProperty([in] BSTR adapterId, unsigned transceiverIndex, unsigned transceiverPropertyType, [in, out] unsigned* outBufferSize, [out, size_is(, *outBufferSize)] byte** outBuffer);
+
 	/// ^^^ RPC Interface Version 2 ^^^
 
 	static unsigned PciswApiRpcProtocolVersion = 2;

@@ -83,6 +83,18 @@ public:
 	 */
 	bool GetPortProperty(int portIndex, HostAdapterPortProperty propertyType, void* outBuffer, uint32_t& bufferSize);
 
+	/*!
+	 * Reads property of adapter's transceiver.
+	 * \param[in] transceiverIndex - Port index. Should not exceed the value returned by `GetPortCount()`.
+	 * \param[in] transceiverPropertyType - Type of property to be retrieved, \see `HostAdapterTransceiverPortProperty`.
+	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
+	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes. On output: number of bytes written to the output buffer.
+	 *		If the output buffer is too small to hold the data, `bufferSize` will contain the minimum required size of an output buffer.
+	 * \returns [bool] - `true` on success, `false` on error.
+	 */
+	bool GetTransceiverProperty(int transceiverIndex, HostAdapterTransceiverProperty transceiverPropertyType,
+		void* outBuffer, uint32_t& bufferSize);
+
 	// Deprecated: use `GetPortProperty()` instead.
 	bool GetPortInfo(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
 	{

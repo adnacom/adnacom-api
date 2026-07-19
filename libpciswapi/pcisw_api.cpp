@@ -210,6 +210,14 @@ HRESULT ApiGetBoardType(const wchar_t* adapterId, std::string& outBoardTypeStrin
 	return hr;
 }
 
+HRESULT ApiGetTransceiverProperty(const wchar_t* adapterId, unsigned transceiverIndex, unsigned infoType, byte*& outBuffer, unsigned& outBufferSize)
+{
+	auto pathBstr = ::SysAllocString(adapterId);
+	HRESULT hr = Gl.rpcCall(PciswGetTransceiverProperty, pathBstr, transceiverIndex, infoType, &outBufferSize, &outBuffer);
+	::SysFreeString(pathBstr);
+	return hr;
+}
+
 
 void __RPC_FAR* __RPC_USER midl_user_allocate(size_t len)
 {
@@ -588,6 +596,24 @@ struct HostAdapter::Impl
 		return AdapterBoardType::Unknown;
 	}
 
+	bool GetTransceiverProperty(int transceiverIndex, HostAdapterTransceiverProperty propType, void* outBuffer, uint32_t& bufferSize)
+	{
+		byte* info = nullptr;
+		unsigned infoSize = bufferSize;
+		HRESULT hr = ApiGetTransceiverProperty(myid_.c_str(), transceiverIndex, static_cast<unsigned>(propType), info, infoSize);
+		if (FAILED(hr) || !info) {
+			traceErr("GetAdProperty('%ws') -> %#x", id_(), hr);
+			return false;
+		}
+
+		bool succeeded = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
+
+		LrpcFreeMemory(info);
+
+		return succeeded;
+	}
+
+
 protected:
 	std::wstring myid_;
 
@@ -653,12 +679,20 @@ bool HostAdapter::GetPortProperty(int portIndex, HostAdapterPortProperty infoTyp
 	return impl_->GetPortInfo(portIndex, infoType, outBuffer, bufferSize);
 }
 
-bool HostAdapter::GetProperty(HostAdapterProperty infoType, void* outBuffer, uint32_t& bufferSize)
+bool HostAdapter::GetAdapterProperty(HostAdapterProperty infoType, void* outBuffer, uint32_t& bufferSize)
 {
 	if (!impl_)
 		return false;
 
 	return impl_->GetProperty(infoType, outBuffer, bufferSize);
+}
+
+bool HostAdapter::GetTransceiverProperty(int transceiverIndex, HostAdapterTransceiverProperty transceiverPropertyType, void* outBuffer, uint32_t& bufferSize)
+{
+	if (!impl_)
+		return false;
+
+	return impl_->GetTransceiverProperty(transceiverIndex, transceiverPropertyType, outBuffer, bufferSize);
 }
 
 } // Adnacom::Api namespace
