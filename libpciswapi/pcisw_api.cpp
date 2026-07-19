@@ -488,17 +488,17 @@ namespace Adnacom::Api {;
 
 
 /*static*/
-std::vector<HostAdapterId> HostAdapter::GetAdapterIds()
+std::vector<AdapterId> Adapter::GetAdapterIds()
 {
 	return Ipc::getAdIds_().value_or({}); // Return empty vector on error.
 }
 
-struct HostAdapter::Impl
+struct Adapter::Impl
 {
-	Impl(const HostAdapterId& id) : myid_{ string2ws(id) }
+	Impl(const AdapterId& id) : myid_{ string2ws(id) }
 	{
 	}
-	Impl(const HostAdapter::Impl&) = default;
+	Impl(const Adapter::Impl&) = default;
 	Impl(Impl&&) = default;
 
 	int GetPortCount() const
@@ -512,7 +512,7 @@ struct HostAdapter::Impl
 		return static_cast<int>(result->size());
 	}
 
-	bool GetPortInfo(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
+	bool GetPortInfo(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
 	{
 		auto result = Ipc::getAdPorts_(myid_.c_str());
 		if (!result) {
@@ -554,7 +554,7 @@ struct HostAdapter::Impl
 		return succeeded;
 	}
 
-	bool GetProperty(HostAdapterProperty infoType, void* outBuffer, uint32_t& bufferSize)
+	bool GetProperty(AdapterProperty infoType, void* outBuffer, uint32_t& bufferSize)
 	{
 		byte* info = nullptr;
 		unsigned infoSize = bufferSize;
@@ -596,7 +596,7 @@ struct HostAdapter::Impl
 		return AdapterType::Unknown;
 	}
 
-	bool GetTransceiverProperty(int transceiverIndex, HostAdapterTransceiverProperty propType, void* outBuffer, uint32_t& bufferSize)
+	bool GetTransceiverProperty(int transceiverIndex, AdapterTransceiverProperty propType, void* outBuffer, uint32_t& bufferSize)
 	{
 		byte* info = nullptr;
 		unsigned infoSize = bufferSize;
@@ -620,21 +620,21 @@ protected:
 	const wchar_t* id_() { return myid_.c_str(); }
 };
 
-HostAdapter::HostAdapter(const HostAdapterId& id) : impl_{new Impl(id)} { }
+Adapter::Adapter(const AdapterId& id) : impl_{new Impl(id)} { }
 
-HostAdapter::HostAdapter(const HostAdapter& other) : impl_{other.impl_ ? new Impl(*other.impl_) : nullptr} { }
-HostAdapter::HostAdapter(HostAdapter&& other) : impl_{other.impl_}
+Adapter::Adapter(const Adapter& other) : impl_{other.impl_ ? new Impl(*other.impl_) : nullptr} { }
+Adapter::Adapter(Adapter&& other) : impl_{other.impl_}
 {
 	// "Steal" impl from other.
 	other.impl_ = nullptr;
 }
 
-HostAdapter::~HostAdapter()
+Adapter::~Adapter()
 {
 	delete impl_;
 }
 
-HostAdapter& HostAdapter::operator=(const HostAdapter& other)
+Adapter& Adapter::operator=(const Adapter& other)
 {
 	if (this != &other) {
 		if (impl_)
@@ -646,7 +646,7 @@ HostAdapter& HostAdapter::operator=(const HostAdapter& other)
 	return *this;
 }
 
-HostAdapter& HostAdapter::operator=(HostAdapter&& other)
+Adapter& Adapter::operator=(Adapter&& other)
 {
 	if (this != &other) {
 		if (impl_)
@@ -657,21 +657,21 @@ HostAdapter& HostAdapter::operator=(HostAdapter&& other)
 	return *this;
 }
 
-int HostAdapter::GetPortCount() const
+int Adapter::GetPortCount() const
 {
 	if (!impl_)
 		return -1;
 	return impl_->GetPortCount();
 }
 
-AdapterType HostAdapter::GetAdapterType() const
+AdapterType Adapter::GetAdapterType() const
 {
 	if (!impl_)
 		return AdapterType::Unknown;
 	return impl_->GetAdapterType();
 }
 
-bool HostAdapter::GetPortProperty(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
+bool Adapter::GetPortProperty(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
 {
 	if (!impl_)
 		return false;
@@ -679,7 +679,7 @@ bool HostAdapter::GetPortProperty(int portIndex, HostAdapterPortProperty infoTyp
 	return impl_->GetPortInfo(portIndex, infoType, outBuffer, bufferSize);
 }
 
-bool HostAdapter::GetAdapterProperty(HostAdapterProperty infoType, void* outBuffer, uint32_t& bufferSize)
+bool Adapter::GetAdapterProperty(AdapterProperty infoType, void* outBuffer, uint32_t& bufferSize)
 {
 	if (!impl_)
 		return false;
@@ -687,7 +687,7 @@ bool HostAdapter::GetAdapterProperty(HostAdapterProperty infoType, void* outBuff
 	return impl_->GetProperty(infoType, outBuffer, bufferSize);
 }
 
-bool HostAdapter::GetTransceiverProperty(int transceiverIndex, HostAdapterTransceiverProperty transceiverPropertyType, void* outBuffer, uint32_t& bufferSize)
+bool Adapter::GetTransceiverProperty(int transceiverIndex, AdapterTransceiverProperty transceiverPropertyType, void* outBuffer, uint32_t& bufferSize)
 {
 	if (!impl_)
 		return false;

@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 	using namespace Adnacom::Api;
 
 	// Retrieve IDs of adapters currently available in our system.
-	auto adapterIds = HostAdapter::GetAdapterIds();
+	auto adapterIds = Adapter::GetAdapterIds();
 
 	if (adapterIds.empty()) {
 		std::println("No Adapters detected.");
@@ -26,17 +26,17 @@ int main(int argc, char* argv[])
 
 	for (auto& id : adapterIds) {
 		// Create a Host Adapter object for each adapter.
-		HostAdapter ad{ adapterIds.front() };
+		Adapter ad{ adapterIds.front() };
 		auto boardType = ad.GetAdapterType();
 
-		std::println("> {} [{}] -- {} ports", id, AsString(boardType), HostAdapter{id}.GetPortCount());
+		std::println("> {} [{}] -- {} ports", id, AsString(boardType), Adapter{id}.GetPortCount());
 
 		// Iterate over adapter's ports and print link speed for each of them.
 		for (int i = 0; i < ad.GetPortCount(); ++i) {
 			// This variable will be used as an output buffer for `HostAdapter::GetPortInfo()`.
 			AdapterPortStatus status{};
 			unsigned bufferSize = sizeof status;
-			auto succeeded = ad.GetPortInfo(i, HostAdapterPortProperty::PortStatus, &status, bufferSize);
+			auto succeeded = ad.GetPortInfo(i, AdapterPortProperty::PortStatus, &status, bufferSize);
 			if (succeeded)
 				std::println(">> port {}: link @ {} {}", i, (int)status.negotiatedLinkSpeed, (int)status.negotiatedLinkWidth);
 			else

@@ -1,6 +1,6 @@
 /*!
  * \file `pcisw_defs.h`
- * Adnacom PCI Host Adapter diagnostics API data structures definition.
+ * Adnacom PCIe Adapter diagnostics API data structures definition.
  * \copyright Copyright 2026 Adnacom Inc.
  */
 #pragma once
@@ -12,9 +12,9 @@
 namespace Adnacom::Api {;
 
 /*!
- * Describes available types of Host Adapter properties used in `HostAdapter::GetAdapterInfo()`.
+ * Describes available types of Adapter properties used in `Adapter::GetAdapterInfo()`.
  */
-enum class HostAdapterProperty
+enum class AdapterProperty
 {
 	/*!
 	 * Generic type for board status information;
@@ -29,9 +29,9 @@ enum class HostAdapterProperty
 };
 
 /*!
- * Describes available types of Host Adapter Port properties used in `HostAdapter::GetPortInfo()`.
+ * Describes available types of Adapter Port properties used in `Adapter::GetPortInfo()`.
  */
-enum class HostAdapterPortProperty
+enum class AdapterPortProperty
 {
 	PortStatus,
 	// ...
@@ -39,9 +39,9 @@ enum class HostAdapterPortProperty
 };
 
 /*!
- * Describes available types of Host Adapter Transceiver Port properties used in `HostAdapter::GetTransceiverPortInfo()`.
+ * Describes available types of Adapter Transceiver Port properties used in `Adapter::GetTransceiverPortInfo()`.
  */
-enum class HostAdapterTransceiverProperty
+enum class AdapterTransceiverProperty
 {
 	VendorName,
 	VendorPartNumber,
@@ -67,7 +67,7 @@ enum class AdapterType : uint8_t
 
 /*!
  * Section below contains descriptions of Adapter Port Properties
- * declared above in `HostAdapterPortProperty`.
+ * declared above in `AdapterPortProperty`.
  */
 
 enum class AdapterPortLinkSpeed : uint8_t
@@ -96,8 +96,8 @@ enum class AdapterBoardState : uint8_t
 #pragma pack(push, 1)
 
 /*!
- * Describes current Host Adapter Port's link status and error counters.
- * Corresponds to `HostAdapterPortProperty::PortStatus`.
+ * Describes current Adapter Port's link status and error counters.
+ * Corresponds to `AdapterPortProperty::PortStatus`.
  */
 struct AdapterPortStatus
 {

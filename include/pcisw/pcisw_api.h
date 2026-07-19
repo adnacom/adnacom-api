@@ -1,6 +1,6 @@
 /*!
  * \file `pcisw_api.h`
- * Adnacom PCI Host Adapter diagnostics API.
+ * Adnacom PCIe Adapter diagnostics API.
  * \copyright Copyright 2026 Adnacom Inc.
  */
 #pragma once
@@ -16,39 +16,39 @@
 namespace Adnacom::Api {;
 
 /*!
- * Type used as a Host Adapter ID.
+ * Type used as an Adapter ID.
  * Should be treated as an opaque datatype, as it may change in the future.
  * Application developers should not make assumptions about this type or
  * the Adapter ID values returned by the API.
  */
-using HostAdapterId = std::string;
+using AdapterId = std::string;
 
 
 /*!
- * Describes an Adnacom Host Adapter instance.
+ * Describes an Adnacom PCIe Adapter instance - Host or Remote.
  */
-class HostAdapter final
+class Adapter final
 {
 public /*static*/:
 	/*!
-	 * Retrieves list of IDs for Host Adapters currently present in the system.
-	 * \return [std::vector<HostAdapterId>] Vector of available Host Adapter IDs.
+	 * Retrieves list of IDs for PCIe Adapters currently present in the system.
+	 * \return [std::vector<AdapterId>] Vector of available Adapter IDs.
 	 */
-	static std::vector<HostAdapterId> GetAdapterIds();
+	static std::vector<AdapterId> GetAdapterIds();
 
 public:
 	/*!
-	 * Creates object for Host Adapter with a given ID.
-	 * \param[in] id Host Adapter ID. \see `HostAdapterId`
+	 * Creates object for PCIe Adapter with a given ID.
+	 * \param[in] id Adapter ID. \see `AdapterId`
 	 */
-	HostAdapter(const HostAdapterId& id);
-	~HostAdapter();
+	Adapter(const AdapterId& id);
+	~Adapter();
 
 	// Copy/move
-	HostAdapter(const HostAdapter& other);
-	HostAdapter(HostAdapter&& other);
-	HostAdapter& operator=(const HostAdapter& other);
-	HostAdapter& operator=(HostAdapter&& other);
+	Adapter(const Adapter& other);
+	Adapter(Adapter&& other);
+	Adapter& operator=(const Adapter& other);
+	Adapter& operator=(Adapter&& other);
 
 	/*!
 	 * Returns number of available ports on the adapter.
@@ -64,39 +64,39 @@ public:
 
 	/*!
 	 * Reads adapter's property value.
-	 * \param[in] propertyType - Type of property to be retrieved, \see `HostAdapterProperty`.
+	 * \param[in] propertyType - Type of property to be retrieved, \see `AdapterProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
 	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes. On output: number of bytes written to the output buffer.
 	 *		If the output buffer is too small to hold the data, `bufferSize` will contain the minimum required size of an output buffer.
 	 * \returns [bool] - `true` on success, `false` on error.
 	 */
-	bool GetAdapterProperty(HostAdapterProperty propertyType, void* outBuffer, uint32_t& bufferSize);
+	bool GetAdapterProperty(AdapterProperty propertyType, void* outBuffer, uint32_t& bufferSize);
 
 	/*!
 	 * Reads adapter port's property value.
 	 * \param[in] portIndex - Port index. Should not exceed the value returned by `GetPortCount()`.
-	 * \param[in] propertyType - Type of property to be retrieved, \see `HostAdapterPortProperty`.
+	 * \param[in] propertyType - Type of property to be retrieved, \see `AdapterPortProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
 	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes. On output: number of bytes written to the output buffer.
 	 *		If the output buffer is too small to hold the data, `bufferSize` will contain the minimum required size of an output buffer.
 	 * \returns [bool] - `true` on success, `false` on error.
 	 */
-	bool GetPortProperty(int portIndex, HostAdapterPortProperty propertyType, void* outBuffer, uint32_t& bufferSize);
+	bool GetPortProperty(int portIndex, AdapterPortProperty propertyType, void* outBuffer, uint32_t& bufferSize);
 
 	/*!
 	 * Reads property of adapter's transceiver.
 	 * \param[in] transceiverIndex - Port index. Should not exceed the value returned by `GetPortCount()`.
-	 * \param[in] transceiverPropertyType - Type of property to be retrieved, \see `HostAdapterTransceiverPortProperty`.
+	 * \param[in] transceiverPropertyType - Type of property to be retrieved, \see `AdapterTransceiverPortProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
 	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes. On output: number of bytes written to the output buffer.
 	 *		If the output buffer is too small to hold the data, `bufferSize` will contain the minimum required size of an output buffer.
 	 * \returns [bool] - `true` on success, `false` on error.
 	 */
-	bool GetTransceiverProperty(int transceiverIndex, HostAdapterTransceiverProperty transceiverPropertyType,
+	bool GetTransceiverProperty(int transceiverIndex, AdapterTransceiverProperty transceiverPropertyType,
 		void* outBuffer, uint32_t& bufferSize);
 
 	// Deprecated: use `GetPortProperty()` instead.
-	bool GetPortInfo(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
+	bool GetPortInfo(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
 	{
 		return GetPortProperty(portIndex, infoType, outBuffer, bufferSize);
 	}
