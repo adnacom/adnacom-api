@@ -571,15 +571,15 @@ struct HostAdapter::Impl
 		return succeeded;
 	}
 
-	AdapterBoardType GetBoardType() const
+	AdapterType GetAdapterType() const
 	{
 		std::string boardString;
 		HRESULT hr = ApiGetBoardType(myid_.c_str(), boardString);
 		if (FAILED(hr))
-			return AdapterBoardType::Unknown;
+			return AdapterType::Unknown;
 
-		using enum AdapterBoardType;
-		constexpr std::pair<const char*, AdapterBoardType> boardTypeMap[] {
+		using enum AdapterType;
+		constexpr std::pair<const char*, AdapterType> boardTypeMap[] {
 			{"H18", H18},
 			{"R34", R34},
 			{"H14", H14},
@@ -593,7 +593,7 @@ struct HostAdapter::Impl
 		}
 
 		// Couldn't match the board ID.
-		return AdapterBoardType::Unknown;
+		return AdapterType::Unknown;
 	}
 
 	bool GetTransceiverProperty(int transceiverIndex, HostAdapterTransceiverProperty propType, void* outBuffer, uint32_t& bufferSize)
@@ -664,11 +664,11 @@ int HostAdapter::GetPortCount() const
 	return impl_->GetPortCount();
 }
 
-AdapterBoardType HostAdapter::GetBoardType() const
+AdapterType HostAdapter::GetAdapterType() const
 {
 	if (!impl_)
-		return AdapterBoardType::Unknown;
-	return impl_->GetBoardType();
+		return AdapterType::Unknown;
+	return impl_->GetAdapterType();
 }
 
 bool HostAdapter::GetPortProperty(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)

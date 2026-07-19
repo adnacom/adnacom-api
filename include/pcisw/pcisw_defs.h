@@ -55,7 +55,7 @@ enum class HostAdapterTransceiverProperty
 };
 
 
-enum class AdapterBoardType : uint8_t
+enum class AdapterType : uint8_t
 {
 	Unknown = 0,
 	H18 = 1,
@@ -407,9 +407,9 @@ struct TransceiverStatus
 // FORMATTING HELPERS
 
 constexpr inline
-const char* AsString(AdapterBoardType boardType)
+const char* AsString(AdapterType boardType)
 {
-	using enum AdapterBoardType;
+	using enum AdapterType;
 	switch (boardType) {
 	case Unknown: return "unknown";
 	case H18: return "H18";

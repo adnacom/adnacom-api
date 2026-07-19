@@ -60,7 +60,7 @@ public:
 	 * Returns number of available ports on the adapter.
 	 * \returns [int] - Port count (upstream and downstream). Returns negative value in case of error (e.g. invalid adapter ID).
 	 */
-	AdapterBoardType GetBoardType() const;
+	AdapterType GetAdapterType() const;
 
 	/*!
 	 * Reads adapter's property value.

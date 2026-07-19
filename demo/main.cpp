@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 	for (auto& id : adapterIds) {
 		// Create a Host Adapter object for each adapter.
 		HostAdapter ad{ adapterIds.front() };
-		auto boardType = ad.GetBoardType();
+		auto boardType = ad.GetAdapterType();
 
 		std::println("> {} [{}] -- {} ports", id, AsString(boardType), HostAdapter{id}.GetPortCount());
 
