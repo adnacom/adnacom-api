@@ -89,7 +89,7 @@ enum class AdapterBoardState : uint8_t
 	PoweringUp = 1,
 	Reset = 2,
 	PexInit = 3,
-	On = 3,
+	On = 4,
 };
 
 
