@@ -240,9 +240,9 @@ struct SafearrayIterator
 	SafearrayIterator(SAFEARRAY* sa, LONG index) : sa_(sa), idx_(index)
 	{
 		LONG lb = -1;
-		SafeArrayGetLBound(sa_, 1, &lb);
+		::SafeArrayGetLBound(sa_, 1, &lb);
 		LONG ub = -1;
-		SafeArrayGetUBound(sa_, 1, &ub);
+		::SafeArrayGetUBound(sa_, 1, &ub);
 
 		assert(lb <= idx_ && lb <= ub);
 	}
