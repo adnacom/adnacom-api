@@ -385,47 +385,20 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 		return std::unexpected(E_OUTOFMEMORY);
 	}
 
-	SAFEARRAY* ptsa = nullptr;
+	SafearrayWrapper<BSTR> ptsa;
 	HRESULT hr = ApiGetAdapterPorts(adIdBstr, &ptsa);
 	if (FAILED(hr)) {
 		traceErr("GetAdapterPorts() -> hr %#x", hr);
 		return std::unexpected(hr);
 	}
 
-	assert(ptsa);
-	assert(::SafeArrayGetDim(ptsa) == 1);
-
-	::SafeArrayLock(ptsa);
-
-	{
-		VARTYPE vt = VT_UNKNOWN;
-		::SafeArrayGetVartype(ptsa, &vt);
-		assert(vt == VT_BSTR);
-
-		assert(::SafeArrayGetElemsize(ptsa) == sizeof(BSTR));
-	}
-
-	long startIdx = 0, endIdx = 0;
-	hr = ::SafeArrayGetLBound(ptsa, 1, &startIdx);
-	assert(SUCCEEDED(hr));
-	hr = ::SafeArrayGetUBound(ptsa, 1, &endIdx);
-	assert(SUCCEEDED(hr));
-	++endIdx;
-
-	const auto count = endIdx - startIdx;
-
 	std::vector<std::string> ports;
-	ports.reserve(count);
-	for (auto i = startIdx; i < endIdx; ++i) {
-		BSTR* ptId = nullptr;
-		::SafeArrayPtrOfIndex(ptsa, &i, (void**)&ptId);
-		if (ptId) {
-			ports.emplace_back(bstr2string(*ptId));
-		}
+	ports.reserve(ptsa.size());
+	for (auto& ptBstr : ptsa) {
+		if (!ptBstr)
+			continue;
+		ports.emplace_back(bstr2string(ptBstr));
 	}
-
-	::SafeArrayUnlock(ptsa);
-	::SafeArrayDestroy(ptsa);
 
 	return ports;
 }
