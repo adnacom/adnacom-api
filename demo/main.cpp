@@ -16,8 +16,10 @@ int main(int argc, char* argv[])
 	// Retrieve IDs of adapters currently available in our system.
 	auto adapterIds = HostAdapter::GetAdapterIds();
 
-	if (adapterIds.empty())
+	if (adapterIds.empty()) {
+		std::println("No Adapters detected.");
 		return -1;
+	}
 
 	std::println("Available Host Adapters:");
 
