@@ -228,32 +228,152 @@ void traceImpl_(const wchar_t* fmt, ...)
 template<typename Ty>
 using Expected = std::expected<Ty, HRESULT>;
 
+template <typename Ty, typename Src>
+struct const_if
+{
+	using type = std::conditional_t<std::is_const_v<Src>, const Ty, Ty>;
+};
+
+template <typename Et>
+struct SafearrayIterator
+{
+	SafearrayIterator(SAFEARRAY* sa, LONG index) : sa_(sa), idx_(index)
+	{
+		LONG lb = -1;
+		SafeArrayGetLBound(sa_, 1, &lb);
+		LONG ub = -1;
+		SafeArrayGetUBound(sa_, 1, &ub);
+
+		assert(lb <= idx_ && lb <= ub);
+	}
+
+	template <typename This>
+	auto& operator*(this This&& self)
+	{
+		using Result = std::conditional_t<std::is_const_v<This>, const Et, Et>;
+
+		assert(self.sa_);
+		Result* ptr = nullptr;
+		HRESULT hr = ::SafeArrayPtrOfIndex(self.sa_, &self.idx_, (void**)&ptr);
+		assert(SUCCEEDED(hr) && ptr);
+		return *ptr;
+	}
+
+	template <typename Self>
+	auto* operator->(this Self&& self)
+	{
+		return std::addressof(*self);
+	}
+
+	bool operator==(const SafearrayIterator& other) const = default;
+	bool operator!=(const SafearrayIterator& other) const = default;
+	bool operator<(const SafearrayIterator& other) const
+	{
+		assert(sa_ == other.sa_);
+		return idx_ < other.idx_;
+	}
+
+	SafearrayIterator operator++(int)
+	{
+		SafearrayIterator tmp = *this;
+		++idx_;
+		return tmp;
+	}
+	SafearrayIterator& operator++()
+	{
+		++idx_;
+		return *this;
+	}
+
+protected:
+	SAFEARRAY* sa_ = nullptr;
+	LONG idx_ = 0;
+};
+
+template <typename Ty>
+struct SafearrayWrapper
+{
+	using iterator = SafearrayIterator<Ty>;
+
+	SafearrayWrapper() = default;
+	SafearrayWrapper(SAFEARRAY* sa) : mysa_(sa)
+	{
+		if (mysa_) {
+			::SafeArrayLock(mysa_);
+			assert(::SafeArrayGetElemsize(mysa_) >= sizeof(Ty));
+		}
+	}
+	~SafearrayWrapper()
+	{
+		if (mysa_) {
+			::SafeArrayUnlock(mysa_);
+			::SafeArrayDestroy(mysa_);
+		}
+	}
+
+	size_t size() const
+	{
+		if (!mysa_)
+			return 0;
+
+		assert(::SafeArrayGetDim(mysa_) == 1);
+		LONG lbound = 0;
+		HRESULT hr = ::SafeArrayGetLBound(mysa_, 1, &lbound);
+		assert(SUCCEEDED(hr));
+		LONG ubound = 0;
+		hr = ::SafeArrayGetUBound(mysa_, 1, &ubound);
+		assert(SUCCEEDED(hr));
+		assert(ubound - lbound + 1 >= 0);
+		if (ubound - lbound + 1 < 0)
+			return 0;
+		return static_cast<size_t>(ubound - lbound + 1);
+	}
+
+	iterator begin() const
+	{
+		LONG idx = 0;
+		HRESULT hr = ::SafeArrayGetLBound(mysa_, 1, &idx);
+		return iterator{mysa_, idx};
+	}
+
+	iterator end() const
+	{
+		LONG idx = 0;
+		if (mysa_) {
+			HRESULT hr = ::SafeArrayGetUBound(mysa_, 1, &idx);
+			++idx; // end() is one past the last element.
+		}
+		return iterator{mysa_, idx};
+	}
+	
+	bool empty() const { return size() == 0; }
+	explicit operator bool() const { return mysa_ != nullptr; }
+
+	SAFEARRAY* get() const { return mysa_; }
+
+	SAFEARRAY** operator&() { return &mysa_; }
+	
+
+protected:
+	SAFEARRAY* mysa_ = nullptr;
+};
+
 namespace Ipc {;
 
 Expected<std::vector<std::string>> getAdIds_()
 {
-	SAFEARRAY* adsa = nullptr;
-
+	SafearrayWrapper<BSTR> adsa;
 	HRESULT hr = ApiGetAdapterIds(&adsa);
 	if (FAILED(hr)) {
 		traceErr("GetAdapters() -> hr %#x", hr);
 		return std::unexpected(hr);
 	}
 
-	assert(adsa);
-	assert(adsa->cDims == 1);
-
-	const auto count = adsa->rgsabound->cElements;
-
-	const auto* arrayData = reinterpret_cast<BSTR*>(adsa->pvData);
-	assert(adsa->cbElements >= count * sizeof(arrayData[0]));
-
+	const auto count = adsa.size();
 	std::vector<std::string> ids;
 	ids.reserve(count);
-	for (unsigned i = adsa->rgsabound->lLbound; i < count; ++i)
-		ids.emplace_back(bstr2string(arrayData[i]));
-
-	::SafeArrayDestroy(adsa);
+	for (auto& e : adsa)
+		ids.emplace_back(bstr2string(e));
 
 	return ids;
 }
