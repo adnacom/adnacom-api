@@ -240,7 +240,8 @@ struct SafearrayIterator
 			assert(lowerBound <= idx_);
 		}
 		if (LONG upperBound = -1; SUCCEEDED(::SafeArrayGetUBound(sa_, 1, &upperBound))) {
-			assert(idx_ <= upperBound);
+			// Add one to allow end iterators to pass the check.
+			assert(idx_ <= upperBound + 1);
 		}
 	}
 
