@@ -329,7 +329,9 @@ struct SafearrayWrapper
 	iterator begin() const
 	{
 		LONG idx = 0;
-		HRESULT hr = ::SafeArrayGetLBound(mysa_, 1, &idx);
+		if (mysa_) {
+			HRESULT hr = ::SafeArrayGetLBound(mysa_, 1, &idx);
+		}
 		return iterator{mysa_, idx};
 	}
 
