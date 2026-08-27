@@ -349,8 +349,6 @@ struct SafearrayWrapper
 	explicit operator bool() const { return mysa_ != nullptr; }
 
 	SAFEARRAY* get() const { return mysa_; }
-
-	SAFEARRAY** operator&() { return &mysa_; }
 	
 
 protected:
@@ -361,17 +359,18 @@ namespace Ipc {;
 
 Expected<std::vector<std::string>> getAdIds_()
 {
-	SafearrayWrapper<BSTR> adsa;
+	SAFEARRAY* adsa = nullptr;
 	HRESULT hr = ApiGetAdapterIds(&adsa);
+	SafearrayWrapper<BSTR> bstrIds = adsa;
 	if (FAILED(hr)) {
 		traceErr("GetAdapters() -> hr %#x", hr);
 		return std::unexpected(hr);
 	}
 
-	const auto count = adsa.size();
+	const auto count = bstrIds.size();
 	std::vector<std::string> ids;
 	ids.reserve(count);
-	for (auto& e : adsa)
+	for (auto& e : bstrIds)
 		ids.emplace_back(bstr2string(e));
 
 	return ids;
@@ -384,16 +383,17 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 		return std::unexpected(E_OUTOFMEMORY);
 	}
 
-	SafearrayWrapper<BSTR> ptsa;
+	SAFEARRAY* ptsa = nullptr;
 	HRESULT hr = ApiGetAdapterPorts(adIdBstr, &ptsa);
+	SafearrayWrapper<BSTR> portsSa = ptsa;
 	if (FAILED(hr)) {
 		traceErr("GetAdapterPorts() -> hr %#x", hr);
 		return std::unexpected(hr);
 	}
 
 	std::vector<std::string> ports;
-	ports.reserve(ptsa.size());
-	for (auto& ptBstr : ptsa) {
+	ports.reserve(portsSa.size());
+	for (auto& ptBstr : portsSa) {
 		if (!ptBstr)
 			continue;
 		ports.emplace_back(bstr2string(ptBstr));
