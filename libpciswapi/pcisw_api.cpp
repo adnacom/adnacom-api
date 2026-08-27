@@ -326,6 +326,15 @@ struct SafearrayWrapper
 		return static_cast<size_t>(ubound - lbound + 1);
 	}
 
+	VARTYPE vartype() const
+	{
+		VARTYPE vt = VT_EMPTY;
+		if (mysa_) {
+			::SafeArrayGetVartype(mysa_, &vt);
+		}
+		return vt;
+	}
+
 	iterator begin() const
 	{
 		LONG idx = 0;
@@ -366,6 +375,10 @@ Expected<std::vector<std::string>> getAdIds_()
 		traceErr("GetAdapters() -> hr %#x", hr);
 		return std::unexpected(hr);
 	}
+	if (bstrIds.vartype() != VT_BSTR) {
+		// Unexpected element type, fail the call.
+		return std::unexpected(E_INVALID_PROTOCOL_FORMAT);
+	}
 
 	const auto count = bstrIds.size();
 	std::vector<std::string> ids;
@@ -389,6 +402,11 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 	if (FAILED(hr)) {
 		traceErr("GetAdapterPorts() -> hr %#x", hr);
 		return std::unexpected(hr);
+	}
+
+	// Check if returned safearray has the expected format.
+	if (portsSa.vartype() != VT_BSTR) {
+		return std::unexpected(E_INVALID_PROTOCOL_FORMAT);
 	}
 
 	std::vector<std::string> ports;
