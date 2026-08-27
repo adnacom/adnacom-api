@@ -406,6 +406,7 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 
 	SAFEARRAY* ptsa = nullptr;
 	HRESULT hr = ApiGetAdapterPorts(adIdBstr, &ptsa);
+	::SysFreeString(adIdBstr);
 	SafearrayWrapper<BSTR> portsSa = ptsa;
 	if (FAILED(hr)) {
 		traceErr("GetAdapterPorts() -> hr %#x", hr);
