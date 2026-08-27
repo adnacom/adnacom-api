@@ -308,6 +308,13 @@ struct SafearrayWrapper
 		}
 	}
 
+	UINT dims() const
+	{
+		if (!mysa_)
+			return 0;
+		return ::SafeArrayGetDim(mysa_);
+	}
+
 	size_t size() const
 	{
 		if (!mysa_)
@@ -375,7 +382,7 @@ Expected<std::vector<std::string>> getAdIds_()
 		traceErr("GetAdapters() -> hr %#x", hr);
 		return std::unexpected(hr);
 	}
-	if (bstrIds.vartype() != VT_BSTR) {
+	if (bstrIds.dims() != 1 || bstrIds.vartype() != VT_BSTR) {
 		// Unexpected element type, fail the call.
 		return std::unexpected(E_INVALID_PROTOCOL_FORMAT);
 	}
@@ -405,7 +412,7 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 	}
 
 	// Check if returned safearray has the expected format.
-	if (portsSa.vartype() != VT_BSTR) {
+	if (portsSa.dims() != 1 || portsSa.vartype() != VT_BSTR) {
 		return std::unexpected(E_INVALID_PROTOCOL_FORMAT);
 	}
 
