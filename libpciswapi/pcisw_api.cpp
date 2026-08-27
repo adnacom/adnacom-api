@@ -228,12 +228,6 @@ void traceImpl_(const wchar_t* fmt, ...)
 template<typename Ty>
 using Expected = std::expected<Ty, HRESULT>;
 
-template <typename Ty, typename Src>
-struct const_if
-{
-	using type = std::conditional_t<std::is_const_v<Src>, const Ty, Ty>;
-};
-
 template <typename Et>
 struct SafearrayIterator
 {
