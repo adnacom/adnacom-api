@@ -228,32 +228,171 @@ void traceImpl_(const wchar_t* fmt, ...)
 template<typename Ty>
 using Expected = std::expected<Ty, HRESULT>;
 
+template <typename Et>
+struct SafearrayIterator
+{
+	SafearrayIterator(SAFEARRAY* sa, LONG index) : sa_(sa), idx_(index)
+	{
+		if (!sa_)
+			return;
+		// Check if supplied index is valid.
+		if (LONG lowerBound = -1; SUCCEEDED(::SafeArrayGetLBound(sa_, 1, &lowerBound))) {
+			assert(lowerBound <= idx_);
+		}
+		if (LONG upperBound = -1; SUCCEEDED(::SafeArrayGetUBound(sa_, 1, &upperBound))) {
+			// Add one to allow end iterators to pass the check.
+			assert(idx_ <= upperBound + 1);
+		}
+	}
+
+	template <typename This>
+	auto& operator*(this This&& self)
+	{
+		using Result = std::conditional_t<std::is_const_v<This>, const Et, Et>;
+
+		assert(self.sa_);
+		Result* ptr = nullptr;
+		HRESULT hr = ::SafeArrayPtrOfIndex(self.sa_, &self.idx_, (void**)&ptr);
+		assert(SUCCEEDED(hr) && ptr);
+		return *ptr;
+	}
+
+	template <typename Self>
+	auto* operator->(this Self&& self)
+	{
+		return std::addressof(*self);
+	}
+
+	bool operator==(const SafearrayIterator& other) const = default;
+	bool operator!=(const SafearrayIterator& other) const = default;
+	bool operator<(const SafearrayIterator& other) const
+	{
+		assert(sa_ == other.sa_);
+		return idx_ < other.idx_;
+	}
+
+	SafearrayIterator operator++(int)
+	{
+		SafearrayIterator tmp = *this;
+		++idx_;
+		return tmp;
+	}
+	SafearrayIterator& operator++()
+	{
+		++idx_;
+		return *this;
+	}
+
+protected:
+	SAFEARRAY* sa_ = nullptr;
+	LONG idx_ = 0;
+};
+
+template <typename Ty>
+struct SafearrayWrapper
+{
+	using iterator = SafearrayIterator<Ty>;
+
+	SafearrayWrapper() = default;
+	SafearrayWrapper(SAFEARRAY* sa) : mysa_(sa)
+	{
+		if (mysa_) {
+			::SafeArrayLock(mysa_);
+			assert(::SafeArrayGetElemsize(mysa_) >= sizeof(Ty));
+		}
+	}
+	~SafearrayWrapper()
+	{
+		if (mysa_) {
+			::SafeArrayUnlock(mysa_);
+			::SafeArrayDestroy(mysa_);
+		}
+	}
+
+	UINT dims() const
+	{
+		if (!mysa_)
+			return 0;
+		return ::SafeArrayGetDim(mysa_);
+	}
+
+	size_t size() const
+	{
+		if (!mysa_)
+			return 0;
+
+		assert(::SafeArrayGetDim(mysa_) == 1);
+		LONG lbound = 0;
+		HRESULT hr = ::SafeArrayGetLBound(mysa_, 1, &lbound);
+		assert(SUCCEEDED(hr));
+		LONG ubound = 0;
+		hr = ::SafeArrayGetUBound(mysa_, 1, &ubound);
+		assert(SUCCEEDED(hr));
+		assert(ubound - lbound + 1 >= 0);
+		if (ubound - lbound + 1 < 0)
+			return 0;
+		return static_cast<size_t>(ubound - lbound + 1);
+	}
+
+	VARTYPE vartype() const
+	{
+		VARTYPE vt = VT_EMPTY;
+		if (mysa_) {
+			::SafeArrayGetVartype(mysa_, &vt);
+		}
+		return vt;
+	}
+
+	iterator begin() const
+	{
+		LONG idx = 0;
+		if (mysa_) {
+			HRESULT hr = ::SafeArrayGetLBound(mysa_, 1, &idx);
+		}
+		return iterator{mysa_, idx};
+	}
+
+	iterator end() const
+	{
+		LONG idx = 0;
+		if (mysa_) {
+			HRESULT hr = ::SafeArrayGetUBound(mysa_, 1, &idx);
+			++idx; // end() is one past the last element.
+		}
+		return iterator{mysa_, idx};
+	}
+	
+	bool empty() const { return size() == 0; }
+	explicit operator bool() const { return mysa_ != nullptr; }
+
+	SAFEARRAY* get() const { return mysa_; }
+	
+
+protected:
+	SAFEARRAY* mysa_ = nullptr;
+};
+
 namespace Ipc {;
 
 Expected<std::vector<std::string>> getAdIds_()
 {
 	SAFEARRAY* adsa = nullptr;
-
 	HRESULT hr = ApiGetAdapterIds(&adsa);
+	SafearrayWrapper<BSTR> bstrIds = adsa;
 	if (FAILED(hr)) {
 		traceErr("GetAdapters() -> hr %#x", hr);
 		return std::unexpected(hr);
 	}
+	if (bstrIds.dims() != 1 || bstrIds.vartype() != VT_BSTR) {
+		// Unexpected element type, fail the call.
+		return std::unexpected(E_INVALID_PROTOCOL_FORMAT);
+	}
 
-	assert(adsa);
-	assert(adsa->cDims == 1);
-
-	const auto count = adsa->rgsabound->cElements;
-
-	const auto* arrayData = reinterpret_cast<BSTR*>(adsa->pvData);
-	assert(adsa->cbElements >= count * sizeof(arrayData[0]));
-
+	const auto count = bstrIds.size();
 	std::vector<std::string> ids;
 	ids.reserve(count);
-	for (unsigned i = adsa->rgsabound->lLbound; i < count; ++i)
-		ids.emplace_back(bstr2string(arrayData[i]));
-
-	::SafeArrayDestroy(adsa);
+	for (auto& e : bstrIds)
+		ids.emplace_back(bstr2string(e));
 
 	return ids;
 }
@@ -267,45 +406,25 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 
 	SAFEARRAY* ptsa = nullptr;
 	HRESULT hr = ApiGetAdapterPorts(adIdBstr, &ptsa);
+	::SysFreeString(adIdBstr);
+	SafearrayWrapper<BSTR> portsSa = ptsa;
 	if (FAILED(hr)) {
 		traceErr("GetAdapterPorts() -> hr %#x", hr);
 		return std::unexpected(hr);
 	}
 
-	assert(ptsa);
-	assert(::SafeArrayGetDim(ptsa) == 1);
-
-	::SafeArrayLock(ptsa);
-
-	{
-		VARTYPE vt = VT_UNKNOWN;
-		::SafeArrayGetVartype(ptsa, &vt);
-		assert(vt == VT_BSTR);
-
-		assert(::SafeArrayGetElemsize(ptsa) == sizeof(BSTR));
+	// Check if returned safearray has the expected format.
+	if (portsSa.dims() != 1 || portsSa.vartype() != VT_BSTR) {
+		return std::unexpected(E_INVALID_PROTOCOL_FORMAT);
 	}
-
-	long startIdx = 0, endIdx = 0;
-	hr = ::SafeArrayGetLBound(ptsa, 1, &startIdx);
-	assert(SUCCEEDED(hr));
-	hr = ::SafeArrayGetUBound(ptsa, 1, &endIdx);
-	assert(SUCCEEDED(hr));
-	++endIdx;
-
-	const auto count = endIdx - startIdx;
 
 	std::vector<std::string> ports;
-	ports.reserve(count);
-	for (auto i = startIdx; i < endIdx; ++i) {
-		BSTR* ptId = nullptr;
-		::SafeArrayPtrOfIndex(ptsa, &i, (void**)&ptId);
-		if (ptId) {
-			ports.emplace_back(bstr2string(*ptId));
-		}
+	ports.reserve(portsSa.size());
+	for (auto& ptBstr : portsSa) {
+		if (!ptBstr)
+			continue;
+		ports.emplace_back(bstr2string(ptBstr));
 	}
-
-	::SafeArrayUnlock(ptsa);
-	::SafeArrayDestroy(ptsa);
 
 	return ports;
 }
