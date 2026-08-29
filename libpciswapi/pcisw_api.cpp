@@ -681,23 +681,23 @@ AdapterType Adapter::GetAdapterType() const
 	return impl_->GetAdapterType();
 }
 
-bool Adapter::GetPortProperty(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
+bool Adapter::GetPortProperty(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/) const
 {
 	if (!impl_)
 		return false;
 
-	return impl_->GetPortInfo(portIndex, infoType, outBuffer, bufferSize);
+	return impl_->GetPortInfo(portIndex, infoType, outBuffer, bufferSize, resultCode);
 }
 
-bool Adapter::GetAdapterProperty(AdapterProperty infoType, void* outBuffer, uint32_t& bufferSize)
+bool Adapter::GetAdapterProperty(AdapterProperty infoType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/) const
 {
 	if (!impl_)
 		return false;
 
-	return impl_->GetProperty(infoType, outBuffer, bufferSize);
+	return impl_->GetProperty(infoType, outBuffer, bufferSize, resultCode);
 }
 
-bool Adapter::GetTransceiverProperty(int transceiverIndex, AdapterTransceiverProperty transceiverPropertyType, void* outBuffer, uint32_t& bufferSize)
+bool Adapter::GetTransceiverProperty(int transceiverIndex, AdapterTransceiverProperty transceiverPropertyType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/) const
 {
 	if (!impl_)
 		return false;

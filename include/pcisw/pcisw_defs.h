@@ -22,7 +22,7 @@ enum class ErrorCode
 };
 
 /*!
- * Describes available types of Adapter properties used in `Adapter::GetAdapterInfo()`.
+ * Describes available types of Adapter properties used in `Adapter::GetProperty()`.
  */
 enum class AdapterProperty
 {
@@ -39,7 +39,7 @@ enum class AdapterProperty
 };
 
 /*!
- * Describes available types of Adapter Port properties used in `Adapter::GetPortInfo()`.
+ * Describes available types of Adapter Port properties used in `Adapter::GetPortProperty()`.
  */
 enum class AdapterPortProperty
 {
@@ -49,7 +49,7 @@ enum class AdapterPortProperty
 };
 
 /*!
- * Describes available types of Adapter Transceiver Port properties used in `Adapter::GetTransceiverPortInfo()`.
+ * Describes available types of Adapter Transceiver Port properties used in `Adapter::GetTransceiverProperty()`.
  */
 enum class AdapterTransceiverProperty
 {
