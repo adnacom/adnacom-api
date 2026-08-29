@@ -469,17 +469,21 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 
 } // Ipc namespace
 
-bool copyResultToBuffer_(void* dst, uint32_t& dstSize, const void* src, uint32_t srcSize)
+Adnacom::Api::ErrorCode copyResultToBuffer_(void* dst, uint32_t& dstSize, const void* src, uint32_t srcSize)
 {
-	if (dst && dstSize >= srcSize) {
-		memcpy(dst, src, srcSize);
-		dstSize = srcSize;
-		return true;
+	using Err = Adnacom::Api::ErrorCode;
+
+	if (!dst) {
+		return Err::InvalidParameter;
+	}
+	memcpy(dst, src, dstSize);
+	if (dstSize >= srcSize) {
+		return Err::Ok;
 	}
 
 	// Write minimum required buffer size to `dstSize`.
 	dstSize = srcSize;
-	return false;
+	return Err::MoreDataAvailable;
 }
 
 /// \region API Implementation
@@ -512,7 +516,7 @@ struct Adapter::Impl
 		return static_cast<int>(result->size());
 	}
 
-	bool GetPortInfo(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
+	bool GetPortInfo(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/)
 	{
 		auto result = Ipc::getAdPorts_(myid_.c_str());
 		if (!result) {
@@ -547,14 +551,16 @@ struct Adapter::Impl
 			return false;
 		}
 
-		bool succeeded = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
+		ErrorCode err = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
 
 		LrpcFreeMemory(info);
 
-		return succeeded;
+		if (resultCode)
+			*resultCode = err;
+		return err == ErrorCode::Ok || err == ErrorCode::MoreDataAvailable;
 	}
 
-	bool GetProperty(AdapterProperty infoType, void* outBuffer, uint32_t& bufferSize)
+	bool GetProperty(AdapterProperty infoType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/)
 	{
 		byte* info = nullptr;
 		unsigned infoSize = bufferSize;
@@ -564,11 +570,13 @@ struct Adapter::Impl
 			return false;
 		}
 
-		bool succeeded = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
+		ErrorCode err = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
 
 		LrpcFreeMemory(info);
 
-		return succeeded;
+		if (resultCode)
+			*resultCode = err;
+		return err == ErrorCode::Ok || err == ErrorCode::MoreDataAvailable;
 	}
 
 	AdapterType GetAdapterType() const
@@ -596,7 +604,7 @@ struct Adapter::Impl
 		return AdapterType::Unknown;
 	}
 
-	bool GetTransceiverProperty(int transceiverIndex, AdapterTransceiverProperty propType, void* outBuffer, uint32_t& bufferSize)
+	bool GetTransceiverProperty(int transceiverIndex, AdapterTransceiverProperty propType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/)
 	{
 		byte* info = nullptr;
 		unsigned infoSize = bufferSize;
@@ -606,11 +614,13 @@ struct Adapter::Impl
 			return false;
 		}
 
-		bool succeeded = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
+		ErrorCode err = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
 
 		LrpcFreeMemory(info);
 
-		return succeeded;
+		if (resultCode)
+			*resultCode = err;
+		return err == ErrorCode::Ok || err == ErrorCode::MoreDataAvailable;
 	}
 
 
@@ -692,7 +702,7 @@ bool Adapter::GetTransceiverProperty(int transceiverIndex, AdapterTransceiverPro
 	if (!impl_)
 		return false;
 
-	return impl_->GetTransceiverProperty(transceiverIndex, transceiverPropertyType, outBuffer, bufferSize);
+	return impl_->GetTransceiverProperty(transceiverIndex, transceiverPropertyType, outBuffer, bufferSize, resultCode);
 }
 
 } // Adnacom::Api namespace

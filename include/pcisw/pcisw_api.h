@@ -67,10 +67,14 @@ public:
 	 * \param[in] propertyType - Type of property to be retrieved, \see `AdapterProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
 	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes. On output: number of bytes written to the output buffer.
-	 *		If the output buffer is too small to hold the data, `bufferSize` will contain the minimum required size of an output buffer.
-	 * \returns [bool] - `true` on success, `false` on error.
+	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
+	 *		as possible into the supplied buffer, and returns the total available data size in the `*bufferSize` argument.
+	 * \param[out] resultCode	- Optional parameter; if non-null, receives an result code on return: `Ok` on success or an error code
+	 *		on failure; if the output data has been truncated because of insufficient buffer length, `MoreDataAvailable` is returned.
+	 * \returns [bool] - `true` on success, `false` on error. If the output data is truncated, the function will still
+	 *		return `true` indicating success.
 	 */
-	bool GetAdapterProperty(AdapterProperty propertyType, void* outBuffer, uint32_t& bufferSize);
+	bool GetAdapterProperty(AdapterProperty propertyType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode = nullptr);
 
 	/*!
 	 * Reads adapter port's property value.
@@ -78,10 +82,14 @@ public:
 	 * \param[in] propertyType - Type of property to be retrieved, \see `AdapterPortProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
 	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes. On output: number of bytes written to the output buffer.
-	 *		If the output buffer is too small to hold the data, `bufferSize` will contain the minimum required size of an output buffer.
-	 * \returns [bool] - `true` on success, `false` on error.
+	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
+	 *		as possible into the supplied buffer, and returns the total available data size in the `*bufferSize` argument.
+	 * \param[out] resultCode	- Optional parameter; if non-null, receives an result code on return: `Ok` on success or an error code
+	 *		on failure; if the output data has been truncated because of insufficient buffer length, `MoreDataAvailable` is returned.
+	 * \returns [bool] - `true` on success, `false` on error. If the output data is truncated, the function will still
+	 *		return `true` indicating success.
 	 */
-	bool GetPortProperty(int portIndex, AdapterPortProperty propertyType, void* outBuffer, uint32_t& bufferSize);
+	bool GetPortProperty(int portIndex, AdapterPortProperty propertyType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode = nullptr);
 
 	/*!
 	 * Reads property of adapter's transceiver.
@@ -89,16 +97,20 @@ public:
 	 * \param[in] transceiverPropertyType - Type of property to be retrieved, \see `AdapterTransceiverPortProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
 	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes. On output: number of bytes written to the output buffer.
-	 *		If the output buffer is too small to hold the data, `bufferSize` will contain the minimum required size of an output buffer.
-	 * \returns [bool] - `true` on success, `false` on error.
+	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
+	 *		as possible into the supplied buffer, and returns the total available data size in the `*bufferSize` argument.
+	 * \param[out] resultCode	- Optional parameter; if non-null, receives an result code on return: `Ok` on success or an error code
+	 *		on failure; if the output data has been truncated because of insufficient buffer length, `MoreDataAvailable` is returned.
+	 * \returns [bool] - `true` on success, `false` on error. If the output data is truncated, the function will still
+	 *		return `true` indicating success.
 	 */
 	bool GetTransceiverProperty(int transceiverIndex, AdapterTransceiverProperty transceiverPropertyType,
-		void* outBuffer, uint32_t& bufferSize);
+		void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode = nullptr);
 
 	// Deprecated: use `GetPortProperty()` instead.
-	bool GetPortInfo(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
+	bool GetPortInfo(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode = nullptr)
 	{
-		return GetPortProperty(portIndex, infoType, outBuffer, bufferSize);
+		return GetPortProperty(portIndex, infoType, outBuffer, bufferSize, resultCode);
 	}
 
 protected:

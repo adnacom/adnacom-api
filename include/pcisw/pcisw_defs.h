@@ -11,6 +11,16 @@
 
 namespace Adnacom::Api {;
 
+enum class ErrorCode
+{
+	Ok = 0,
+	GenericFailure = 1,
+	NotFound,
+	InvalidParameter,
+	OutOfMemory,
+	MoreDataAvailable, //!< Destination buffer provided by the client does not fit all the data contained in the requested source.
+};
+
 /*!
  * Describes available types of Adapter properties used in `Adapter::GetAdapterInfo()`.
  */
