@@ -476,14 +476,16 @@ Adnacom::Api::ErrorCode copyResultToBuffer_(void* dst, uint32_t& dstSize, const 
 	if (!dst) {
 		return Err::InvalidParameter;
 	}
-	memcpy(dst, src, dstSize);
-	if (dstSize >= srcSize) {
-		return Err::Ok;
-	}
+
+	uint32_t dataSize = srcSize;
+	if (dstSize < dataSize)
+		dataSize = dstSize;
+
+	memcpy(dst, src, dataSize);
 
 	// Write minimum required buffer size to `dstSize`.
 	dstSize = srcSize;
-	return Err::MoreDataAvailable;
+	return Err::Ok;
 }
 
 /// \region API Implementation
@@ -557,7 +559,7 @@ struct Adapter::Impl
 
 		if (resultCode)
 			*resultCode = err;
-		return err == ErrorCode::Ok || err == ErrorCode::MoreDataAvailable;
+		return err == ErrorCode::Ok;
 	}
 
 	bool GetProperty(AdapterProperty infoType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/)
@@ -576,7 +578,7 @@ struct Adapter::Impl
 
 		if (resultCode)
 			*resultCode = err;
-		return err == ErrorCode::Ok || err == ErrorCode::MoreDataAvailable;
+		return err == ErrorCode::Ok;
 	}
 
 	AdapterType GetAdapterType() const
@@ -620,7 +622,7 @@ struct Adapter::Impl
 
 		if (resultCode)
 			*resultCode = err;
-		return err == ErrorCode::Ok || err == ErrorCode::MoreDataAvailable;
+		return err == ErrorCode::Ok;
 	}
 
 

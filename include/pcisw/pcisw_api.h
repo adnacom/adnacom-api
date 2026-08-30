@@ -70,7 +70,7 @@ public:
 	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
 	 *		as possible into the supplied buffer, and returns the total property data size in the `*bufferSize` argument.
 	 * \param[out] resultCode	- Optional parameter; if non-null, receives a result code on return: `Ok` on success or an error code
-	 *		on failure; if the output data has been truncated because of insufficient buffer length, `MoreDataAvailable` is returned.
+	 *		on failure.
 	 * \returns [bool] - `true` on success, `false` on error. If the output data is truncated, the function will still
 	 *		return `true` indicating success.
 	 */
@@ -85,7 +85,7 @@ public:
 	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
 	 *		as possible into the supplied buffer, and returns the total property data size in the `*bufferSize` argument.
 	 * \param[out] resultCode	- Optional parameter; if non-null, receives a result code on return: `Ok` on success or an error code
-	 *		on failure; if the output data has been truncated because of insufficient buffer length, `MoreDataAvailable` is returned.
+	 *		on failure.
 	 * \returns [bool] - `true` on success, `false` on error. If the output data is truncated, the function will still
 	 *		return `true` indicating success.
 	 */
@@ -100,7 +100,7 @@ public:
 	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
 	 *		as possible into the supplied buffer, and returns the total property data size in the `*bufferSize` argument.
 	 * \param[out] resultCode	- Optional parameter; if non-null, receives a result code on return: `Ok` on success or an error code
-	 *		on failure; if the output data has been truncated because of insufficient buffer length, `MoreDataAvailable` is returned.
+	 *		on failure.
 	 * \returns [bool] - `true` on success, `false` on error. If the output data is truncated, the function will still
 	 *		return `true` indicating success.
 	 */
