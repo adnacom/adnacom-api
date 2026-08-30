@@ -66,9 +66,9 @@ public:
 	 * Reads adapter's property value.
 	 * \param[in] propertyType - Type of property to be retrieved, \see `AdapterProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
-	 * \param[in,out] bufferSize - On input: size of the `outBuffer`; on output: receives the size of the requested property, in bytes.
+	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes; on output: receives the size of the requested property, in bytes.
 	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
-	 *		as possible into the supplied buffer, and returns the total available data size in the `*bufferSize` argument.
+	 *		as possible into the supplied buffer, and returns the total property data size in the `*bufferSize` argument.
 	 * \param[out] resultCode	- Optional parameter; if non-null, receives a result code on return: `Ok` on success or an error code
 	 *		on failure; if the output data has been truncated because of insufficient buffer length, `MoreDataAvailable` is returned.
 	 * \returns [bool] - `true` on success, `false` on error. If the output data is truncated, the function will still
@@ -81,9 +81,9 @@ public:
 	 * \param[in] portIndex - Port index. Should not exceed the value returned by `GetPortCount()`.
 	 * \param[in] propertyType - Type of property to be retrieved, \see `AdapterPortProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
-	 * \param[in,out] bufferSize - On input: size of the `outBuffer`; on output: size of the requested property, in bytes.
+	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes; on output: size of the requested property, in bytes.
 	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
-	 *		as possible into the supplied buffer, and returns the total available data size in the `*bufferSize` argument.
+	 *		as possible into the supplied buffer, and returns the total property data size in the `*bufferSize` argument.
 	 * \param[out] resultCode	- Optional parameter; if non-null, receives a result code on return: `Ok` on success or an error code
 	 *		on failure; if the output data has been truncated because of insufficient buffer length, `MoreDataAvailable` is returned.
 	 * \returns [bool] - `true` on success, `false` on error. If the output data is truncated, the function will still
@@ -96,9 +96,9 @@ public:
 	 * \param[in] transceiverIndex - Port index. Should not exceed the value returned by `GetPortCount()`.
 	 * \param[in] transceiverPropertyType - Type of property to be retrieved, \see `AdapterTransceiverPortProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
-	 * \param[in,out] bufferSize - On input: size of the `outBuffer`; on output: size of the requested property, in bytes.
+	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes; on output: size of the requested property, in bytes.
 	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
-	 *		as possible into the supplied buffer, and returns the total available data size in the `*bufferSize` argument.
+	 *		as possible into the supplied buffer, and returns the total property data size in the `*bufferSize` argument.
 	 * \param[out] resultCode	- Optional parameter; if non-null, receives a result code on return: `Ok` on success or an error code
 	 *		on failure; if the output data has been truncated because of insufficient buffer length, `MoreDataAvailable` is returned.
 	 * \returns [bool] - `true` on success, `false` on error. If the output data is truncated, the function will still
