@@ -70,7 +70,11 @@ public:
 	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
 	 *		as possible into the supplied buffer, and returns the total property data size in the `*bufferSize` argument.
 	 * \param[out] resultCode	- Optional parameter; if non-null, receives a result code on return: `Ok` on success or an error code
-	 *		on failure.
+	 *		on failure. Possible error codes include:
+	 *		`NotFound` - returned when the specified adapter is not found. Make sure the device is connected and is operating correctly,
+	 *			and the device ID used to create the Adapter object is valid.
+	 *		`InvalidParameter` - returned when the supplied `propertyType` is not recognized, or `outBuffer` is null.
+	 *		`OutOfMemory` - insufficient system resources to complete the operation.
 	 * \returns [bool] - `true` on success, `false` on error. If the output data is truncated, the function will still
 	 *		return `true` indicating success.
 	 */
@@ -85,7 +89,10 @@ public:
 	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
 	 *		as possible into the supplied buffer, and returns the total property data size in the `*bufferSize` argument.
 	 * \param[out] resultCode	- Optional parameter; if non-null, receives a result code on return: `Ok` on success or an error code
-	 *		on failure.
+	 *		on failure. Possible error codes include:
+	 *		`NotFound` - returned when the specified port is not found. Make sure the supplied port index is valid.
+	 *		`InvalidParameter` - returned when the supplied `propertyType` is not recognized, or `outBuffer` is null.
+	 *		`OutOfMemory` - insufficient system resources to complete the operation.
 	 * \returns [bool] - `true` on success, `false` on error. If the output data is truncated, the function will still
 	 *		return `true` indicating success.
 	 */
@@ -100,7 +107,10 @@ public:
 	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
 	 *		as possible into the supplied buffer, and returns the total property data size in the `*bufferSize` argument.
 	 * \param[out] resultCode	- Optional parameter; if non-null, receives a result code on return: `Ok` on success or an error code
-	 *		on failure.
+	 *		on failure. Possible error codes include:
+	 *		`NotFound` - returned when the specified transceiver is not found. Make sure the specified index is correct.
+	 *		`InvalidParameter` - returned when the supplied `propertyType` is not recognized, or `outBuffer` is null.
+	 *		`OutOfMemory` - insufficient system resources to complete the operation.
 	 * \returns [bool] - `true` on success, `false` on error. If the output data is truncated, the function will still
 	 *		return `true` indicating success.
 	 */

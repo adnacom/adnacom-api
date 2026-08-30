@@ -17,6 +17,9 @@
 void LrpcFreeMemory(void* ptr);
 HRESULT LrpcConnect();
 
+using ErrCode = Adnacom::Api::ErrorCode;
+
+
 // String Utilities
 inline
 std::string bstr2string(BSTR bstr)
@@ -469,12 +472,10 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 
 } // Ipc namespace
 
-Adnacom::Api::ErrorCode copyResultToBuffer_(void* dst, uint32_t& dstSize, const void* src, uint32_t srcSize)
+ErrCode copyResultToBuffer_(void* dst, uint32_t& dstSize, const void* src, uint32_t srcSize)
 {
-	using Err = Adnacom::Api::ErrorCode;
-
 	if (!dst) {
-		return Err::InvalidParameter;
+		return ErrCode::InvalidParameter;
 	}
 
 	uint32_t dataSize = srcSize;
@@ -485,7 +486,28 @@ Adnacom::Api::ErrorCode copyResultToBuffer_(void* dst, uint32_t& dstSize, const 
 
 	// Write minimum required buffer size to `dstSize`.
 	dstSize = srcSize;
-	return Err::Ok;
+	return ErrCode::Ok;
+}
+
+ErrCode hresult2Err_(HRESULT hr)
+{
+	switch (hr) {
+	case E_OUTOFMEMORY:
+		return ErrCode::OutOfMemory;
+	case E_INVALIDARG:
+		return ErrCode::InvalidParameter;
+	case HRESULT_FROM_WIN32(ERROR_NOT_FOUND):
+	case NTE_NOT_FOUND:
+		return ErrCode::NotFound;
+	}
+	return ErrCode::GenericFailure;
+}
+ErrCode hresult2Err_(HRESULT hr, ErrCode* outErrCode)
+{
+	auto result = hresult2Err_(hr);
+	if (outErrCode)
+		*outErrCode = result;
+	return result;
 }
 
 /// \region API Implementation
@@ -523,16 +545,21 @@ struct Adapter::Impl
 		auto result = Ipc::getAdPorts_(myid_.c_str());
 		if (!result) {
 			traceErr("GetPortInfo: failed to enumerate ports! Error %d", result.error());
+			hresult2Err_(result.error(), resultCode);
 			return false;
 		}
 		auto& ports = *result;
 		if (ports.empty()) {
 			traceErr("GetPortInfo: no ports on adapter '%ws'", myid_.c_str());
+			if (resultCode)
+				*resultCode = ErrCode::NotFound;
 			return false;
 		}
 
 		if (portIndex >= (int)ports.size()) {
 			traceErr("GetPortInfo(): invalid port index %d; port count: %d", portIndex, (int)ports.size());
+			if (resultCode)
+				*resultCode = ErrCode::NotFound;
 			return false;
 		}
 
@@ -550,6 +577,7 @@ struct Adapter::Impl
 
 		if (FAILED(hr) || !info) {
 			traceErr("GetPortInfo(index %d) -> %#x", portIndex, hr);
+			hresult2Err_(hr, resultCode);
 			return false;
 		}
 
@@ -569,6 +597,7 @@ struct Adapter::Impl
 		HRESULT hr = ApiGetAdapterProperty(myid_.c_str(), static_cast<unsigned>(infoType), info, infoSize);
 		if (FAILED(hr) || !info) {
 			traceErr("GetAdProperty('%ws') -> %#x", id_(), hr);
+			hresult2Err_(hr, resultCode);
 			return false;
 		}
 
@@ -613,6 +642,7 @@ struct Adapter::Impl
 		HRESULT hr = ApiGetTransceiverProperty(myid_.c_str(), transceiverIndex, static_cast<unsigned>(propType), info, infoSize);
 		if (FAILED(hr) || !info) {
 			traceErr("GetAdProperty('%ws') -> %#x", id_(), hr);
+			hresult2Err_(hr, resultCode);
 			return false;
 		}
 
