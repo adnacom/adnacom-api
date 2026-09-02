@@ -64,11 +64,14 @@ public:
 
 	/*!
 	 * Reads adapter's property value.
-	 * \param[in] propertyType - Type of property to be retrieved, \see `AdapterProperty`.
+	 * \param[in] propertyType - Type of the property to be retrieved, see `AdapterProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
-	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes; on output: receives the size of the requested property, in bytes.
-	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
-	 *		as possible into the supplied buffer, and returns the total property data size in the `*bufferSize` argument.
+	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes; on output: size of the requested property, in bytes.
+	 *		If `outBuffer` is non-null, writes the requested property data into the buffer; maximum number of bytes written
+	 *		is limited by the property size. If the output buffer is smaller than the property size, the output data is truncated
+	 *		to fit into the buffer, and the function returns successfully.
+	 *		To get the property data size without reading the property, pass `nullptr` as an output buffer, then use the value returned
+	 *		in `*bufferSize`.
 	 * \param[out] resultCode	- Optional parameter; if non-null, receives a result code on return: `Ok` on success or an error code
 	 *		on failure. Possible error codes include:
 	 *		`NotFound` - returned when the specified adapter is not found. Make sure the device is connected and is operating correctly,
@@ -83,11 +86,14 @@ public:
 	/*!
 	 * Reads adapter port's property value.
 	 * \param[in] portIndex - Port index. Should not exceed the value returned by `GetPortCount()`.
-	 * \param[in] propertyType - Type of property to be retrieved, \see `AdapterPortProperty`.
+	 * \param[in] propertyType - Type of property to be retrieved, see `AdapterPortProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
 	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes; on output: size of the requested property, in bytes.
-	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
-	 *		as possible into the supplied buffer, and returns the total property data size in the `*bufferSize` argument.
+	 *		If `outBuffer` is non-null, writes the requested property data into the buffer; maximum number of bytes written
+	 *		is limited by the property size. If the output buffer is smaller than the property size, the output data is truncated
+	 *		to fit into the buffer, and the function returns successfully.
+	 *		To get the property data size without reading the property, pass `nullptr` as an output buffer, then use the value returned
+	 *		in `*bufferSize`.
 	 * \param[out] resultCode	- Optional parameter; if non-null, receives a result code on return: `Ok` on success or an error code
 	 *		on failure. Possible error codes include:
 	 *		`NotFound` - returned when the specified port is not found. Make sure the supplied port index is valid.
@@ -100,12 +106,15 @@ public:
 
 	/*!
 	 * Reads property of adapter's transceiver.
-	 * \param[in] transceiverIndex - Port index. Should not exceed the value returned by `GetPortCount()`.
-	 * \param[in] transceiverPropertyType - Type of property to be retrieved, \see `AdapterTransceiverPortProperty`.
+	 * \param[in] transceiverIndex - Transceiver index.
+	 * \param[in] transceiverPropertyType - Type of property to be retrieved, see `AdapterTransceiverProperty`.
 	 * \param[out] outBuffer - Data buffer where the retrieved data will be placed.
 	 * \param[in,out] bufferSize - On input: size of the `outBuffer`, in bytes; on output: size of the requested property, in bytes.
-	 *		If the output buffer is too small to hold the data, the data will be truncated, i.e. the function writes as many bytes
-	 *		as possible into the supplied buffer, and returns the total property data size in the `*bufferSize` argument.
+	 *		If `outBuffer` is non-null, writes the requested property data into the buffer; maximum number of bytes written
+	 *		is limited by the property size. If the output buffer is smaller than the property size, the output data is truncated
+	 *		to fit into the buffer, and the function returns successfully.
+	 *		To get the property data size without reading the property, pass `nullptr` as an output buffer, then use the value returned
+	 *		in `*bufferSize`.
 	 * \param[out] resultCode	- Optional parameter; if non-null, receives a result code on return: `Ok` on success or an error code
 	 *		on failure. Possible error codes include:
 	 *		`NotFound` - returned when the specified transceiver is not found. Make sure the specified index is correct.
