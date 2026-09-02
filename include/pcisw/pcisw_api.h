@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <expected>
 
 #include "pcisw_defs.h"
 
@@ -84,6 +85,26 @@ public:
 	bool GetAdapterProperty(AdapterProperty propertyType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode = nullptr) const;
 
 	/*!
+	 * Reads adapter's property value.
+	 * Type of the property value is deduced automatically at compile time based on the property type `Pr`.
+	 * \tparam	Pr	Type of the property to be retrieved, see \ref `AdapterProperty`.
+	 * \returns [std::expected] - `std::expected` containing either the retrieved property value
+	 *		or an error code on failure.
+	 */
+	template <AdapterProperty Pr>
+	auto GetAdapterProperty() const
+		-> std::expected<AdapterPropertyDataType<Pr>, ErrorCode>
+	{
+		AdapterPropertyDataType<Pr> outData;
+		uint32_t size = sizeof outData;
+		ErrorCode err = ErrorCode::Ok;
+		if (GetAdapterProperty(Pr, &outData, size, &err))
+			return outData;
+
+		return std::unexpected{err};
+	}
+
+	/*!
 	 * Reads adapter port's property value.
 	 * \param[in] portIndex - Port index. Should not exceed the value returned by `GetPortCount()`.
 	 * \param[in] propertyType - Type of property to be retrieved, see `AdapterPortProperty`.
@@ -103,6 +124,28 @@ public:
 	 *		return `true` indicating success.
 	 */
 	bool GetPortProperty(int portIndex, AdapterPortProperty propertyType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode = nullptr) const;
+
+
+	/*!
+	 * Reads adapter port's property value.
+	 * Type of the property value is deduced automatically at compile time based on the property type `Pr`.
+	 * \tparam	Pr	- Type of the property to be retrieved, see `AdapterPortProperty`.
+	 * \param[in]	portIndex	- Port index. Should not exceed the value returned by `GetPortCount()`.
+	 * \returns [std::expected] - `std::expected` containing either the retrieved property value
+	 *		or an error code on failure.
+	 */
+	template <AdapterPortProperty Pr>
+	auto GetPortProperty(int portIndex) const
+		-> std::expected<AdapterPortPropertyDataType<Pr>, ErrorCode>
+	{
+		AdapterPortPropertyDataType<Pr> outData;
+		uint32_t size = sizeof outData;
+		ErrorCode err = ErrorCode::Ok;
+		if (GetPortProperty(portIndex, Pr, &outData, size, &err))
+			return outData;
+
+		return std::unexpected{err};
+	}
 
 	/*!
 	 * Reads property of adapter's transceiver.
@@ -125,6 +168,28 @@ public:
 	 */
 	bool GetTransceiverProperty(int transceiverIndex, AdapterTransceiverProperty transceiverPropertyType,
 		void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode = nullptr) const;
+
+	/*!
+	 * Reads property of adapter's transceiver.
+	 * Type of the property value is deduced automatically at compile time based on the property type `Pr`.
+	 * \tparam Pr - Type of the property to be retrieved, see `AdapterTransceiverProperty`.
+	 * \param[in] transceiverIndex - Transceiver index.
+	 * \returns [std::expected] - `std::expected` containing either the retrieved property value
+	 *		or an error code on failure.
+	 */
+	template <AdapterTransceiverProperty Pr>
+	auto GetTransceiverProperty(int transceiverIndex) const
+		-> std::expected<AdapterTransceiverPropertyDataType<Pr>, ErrorCode>
+	{
+		AdapterTransceiverPropertyDataType<Pr> outData;
+		uint32_t size = sizeof outData;
+		ErrorCode err = ErrorCode::Ok;
+		if (GetTransceiverProperty(transceiverIndex, Pr, &outData, size, &err))
+			return outData;
+
+		return std::unexpected{err};
+	}
+
 
 	// Deprecated: use `GetPortProperty()` instead.
 	bool GetPortInfo(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode = nullptr) const

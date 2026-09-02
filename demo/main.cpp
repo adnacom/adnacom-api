@@ -34,7 +34,48 @@ template <> struct std::formatter<Adnacom::Api::AdapterBoardState> : std::format
 			case BoardState::On: return "On";
 			}
 			return "<unknown>";
-			}();
+		}();
+		return std::formatter<const char*>::format(text, ctx);
+	}
+};
+template <> struct std::formatter<Adnacom::Api::TransceiverType> : std::formatter<const char*> {
+	using TransceiverType = Adnacom::Api::TransceiverType;
+	auto format(TransceiverType tt, std::format_context& ctx) const {
+		const char* text = [tt] {
+			switch (tt) {
+			case TransceiverType::Qsfp: return "QSFP";
+			case TransceiverType::Sfp: return "SFP";
+			case TransceiverType::Csfp: return "CSFP";
+			}
+			return "<unknown>";
+		}();
+		return std::formatter<const char*>::format(text, ctx);
+	}
+};
+template <> struct std::formatter<Adnacom::Api::TransceiverTechnology> : std::formatter<const char*> {
+	using Tech = Adnacom::Api::TransceiverTechnology;
+	auto format(Tech t, std::format_context& ctx) const {
+		const char* text = [t] {
+			switch (t) {
+			case Tech::Vcsel850nm: return "850 nm VCSEL";
+			case Tech::Vcsel1310nm: return "1310 nm VCSEL";
+			case Tech::Vcsel1550nm: return "1550 nm VCSEL";
+			case Tech::Fp1310nmFP: return "1310 nm FP";
+			case Tech::Dfb1310nm: return "1310 nm DFB";
+			case Tech::Dfb1550nm: return "1550 nm DFB";
+			case Tech::Eml1310nm: return "1310 nm EML";
+			case Tech::Eml1550nm: return "1550 nm EML";
+			case Tech::Others: return "Others";
+			case Tech::Dfb1490nm: return "1490 nm DFB";
+			case Tech::CopperCableUnequalized: return "Copper cable unequalized";
+			case Tech::CopperCablePassiveEqualized: return "Copper cable passive equalized";
+			case Tech::CopperCableNearFarEndLimitActive: return "Copper cable, near and far end limiting active equalizers";
+			case Tech::CopperCableFarEndLimitActive: return "Copper cable, far end limiting active equalizers";
+			case Tech::CopperCableNearEndLimitActive: return "Copper cable, near end limiting active equalizers";
+			case Tech::CopperCableLinearActive: return "Copper cable, linear active equalizers";
+			}
+			return "<unknown>";
+		}();
 		return std::formatter<const char*>::format(text, ctx);
 	}
 };
@@ -73,14 +114,25 @@ int main(int argc, char* argv[])
 
 		// Iterate over adapter's ports and print link speed for each of them.
 		for (int i = 0; i < ad.GetPortCount(); ++i) {
-			// This variable will be used as an output buffer for `HostAdapter::GetPortInfo()`.
-			AdapterPortStatus status{};
-			unsigned bufferSize = sizeof status;
-			auto succeeded = ad.GetPortProperty(i, AdapterPortProperty::PortStatus, &status, bufferSize);
-			if (succeeded)
-				std::println(">> port {}: link @ {} {}", i, (int)status.negotiatedLinkSpeed, (int)status.negotiatedLinkWidth);
+			// This version of `GetPortProperty()` returns std::expected containing either underlying data structure or an error code.
+			auto status = ad.GetPortProperty<AdapterPortProperty::PortStatus>(i);
+			if (status)
+				std::println(">> port {}: link @ {} {}", i, (int)status->negotiatedLinkSpeed, (int)status->negotiatedLinkWidth);
 			else
-				std::println(">> port {}: [!] ERROR", i);
+				std::println(">> port {}: [!] ERROR {}", i, (int)status.error());
+		}
+
+		const int MaxTransceivers = 4;
+
+		// Iterate over adapter's ports and print link speed for each of them.
+		for (int i = 0; i < MaxTransceivers; ++i) {
+			auto caps = ad.GetTransceiverProperty<AdapterTransceiverProperty::DeviceCapabilities>(i);
+			if (!caps)
+				break;
+
+			caps->capabilities;
+
+			std::println(">> transceiver {}> type: {}, technology: {}", i, (TransceiverType)caps->transceiverType, (TransceiverTechnology)caps->deviceTechnology);
 		}
 	}
 

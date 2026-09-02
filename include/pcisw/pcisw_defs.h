@@ -413,6 +413,29 @@ struct TransceiverStatus
 #pragma pack(pop)
 
 
+// PROPERTY TRAITS
+
+template <AdapterProperty Ap> struct AdapterPropertyTraits;
+template <> struct AdapterPropertyTraits<AdapterProperty::BoardStatusH18> { using Type = H18Status; };
+template <> struct AdapterPropertyTraits<AdapterProperty::BoardStatusH14> { using Type = H14Status; };
+template <> struct AdapterPropertyTraits<AdapterProperty::BoardStatusR34> { using Type = R34Status; };
+
+template <AdapterPortProperty Pp> struct AdapterPortPropertyTraits;
+template <> struct AdapterPortPropertyTraits<AdapterPortProperty::PortStatus> { using Type = AdapterPortStatus; };
+
+template <AdapterTransceiverProperty Tp> struct AdapterTransceiverPropertyTraits;
+template <> struct AdapterTransceiverPropertyTraits<AdapterTransceiverProperty::VendorName> { using Type = TransceiverVendorName; };
+template <> struct AdapterTransceiverPropertyTraits<AdapterTransceiverProperty::VendorPartNumber> { using Type = TransceiverVendorPartNumber; };
+template <> struct AdapterTransceiverPropertyTraits<AdapterTransceiverProperty::DeviceCapabilities> { using Type = TransceiverDeviceCapabilities; };
+template <> struct AdapterTransceiverPropertyTraits<AdapterTransceiverProperty::StartupTime> { using Type = TransceiverStartupTime; };
+template <> struct AdapterTransceiverPropertyTraits<AdapterTransceiverProperty::VendorSerialNumber> { using Type = TransceiverVendorSerialNumber; };
+template <> struct AdapterTransceiverPropertyTraits<AdapterTransceiverProperty::Thresholds> { using Type = TransceiverThresholds; };
+template <> struct AdapterTransceiverPropertyTraits<AdapterTransceiverProperty::Status> { using Type = TransceiverStatus; };
+
+template <AdapterProperty AdPr> using AdapterPropertyDataType = typename AdapterPropertyTraits<AdPr>::Type;
+template <AdapterPortProperty PtPr> using AdapterPortPropertyDataType = typename AdapterPortPropertyTraits<PtPr>::Type;
+template <AdapterTransceiverProperty TrPr> using AdapterTransceiverPropertyDataType = typename AdapterTransceiverPropertyTraits<TrPr>::Type;
+
 // FORMATTING HELPERS
 
 constexpr inline
