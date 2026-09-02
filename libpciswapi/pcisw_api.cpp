@@ -475,6 +475,7 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 ErrCode copyResultToBuffer_(void* dst, uint32_t& dstSize, const void* src, uint32_t srcSize)
 {
 	if (!dst) {
+		dstSize = srcSize;
 		return ErrCode::InvalidParameter;
 	}
 
@@ -485,7 +486,6 @@ ErrCode copyResultToBuffer_(void* dst, uint32_t& dstSize, const void* src, uint3
 	memcpy(dst, src, dataSize);
 
 	// Write minimum required buffer size to `dstSize`.
-	dstSize = srcSize;
 	return ErrCode::Ok;
 }
 
