@@ -54,11 +54,11 @@ enum class AdapterTransceiverProperty
 {
 	VendorName,
 	VendorPartNumber,
-	QsfpDeviceCapabilities,
-	QsfpStartupTime,
+	DeviceCapabilities,
+	StartupTime,
 	VendorSerialNumber,
-	QsfpThresholds,
-	QsfpStatus,
+	Thresholds,
+	Status,
 	// ...
 	Max
 };
@@ -280,7 +280,7 @@ enum class TransceiverTechnology : uint8_t
 	CopperCableLinearActive = 15,
 };
 
-enum class QsfpDeviceCapabilityFlags : uint8_t
+enum class TransceiverCapabilityFlags : uint8_t
 {
 	TxSquelch = 0b0000'0001,
 	TxSquelchDisable = 0b0000'0010,
@@ -292,7 +292,7 @@ enum class QsfpDeviceCapabilityFlags : uint8_t
 	TxDisable = 0b1000'0000,
 };
 
-enum class DeviceTransceiverType : uint8_t
+enum class TransceiverType : uint8_t
 {
 	Qsfp = 0,
 	Sfp = 1,
@@ -345,8 +345,8 @@ struct TransceiverDeviceCapabilities
 {
 	uint8_t revisionNumber[2];	// The vendor revision number ASCII characters.
 	TransceiverTechnology deviceTechnology : 4;
-	DeviceTransceiverType transceiverType : 4;
-	QsfpDeviceCapabilityFlags capabilities;
+	TransceiverType transceiverType : 4;
+	TransceiverCapabilityFlags capabilities;
 };
 
 struct TransceiverStartupTime
