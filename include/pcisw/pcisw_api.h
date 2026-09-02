@@ -191,12 +191,6 @@ public:
 	}
 
 
-	// Deprecated: use `GetPortProperty()` instead.
-	bool GetPortInfo(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode = nullptr) const
-	{
-		return GetPortProperty(portIndex, infoType, outBuffer, bufferSize, resultCode);
-	}
-
 protected:
 	struct Impl;
 	Impl* impl_ = nullptr;
