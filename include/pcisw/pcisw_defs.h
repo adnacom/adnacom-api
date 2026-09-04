@@ -454,4 +454,71 @@ const char* AsString(AdapterType boardType)
 	}
 }
 
+constexpr inline
+const char* AsString(AdapterMode mode)
+{
+	using enum AdapterMode;
+	switch (mode) {
+	case Host: return "Host";
+	case Remote: return "Remote";
+	default:
+		return "<unknown>";
+	}
+}
+
+constexpr inline
+const char* AsString(AdapterBoardState state)
+{
+	using enum AdapterBoardState;
+	switch (state) {
+	case Standby: return "Standby";
+	case PoweringUp: return "PoweringUp";
+	case Reset: return "Reset";
+	case PexInit: return "PexInit";
+	case On: return "On";
+	default:
+		return "<unknown>";
+	}
+}
+
+constexpr inline
+const char* AsString(TransceiverType type)
+{
+	using enum TransceiverType;
+	switch (type) {
+	case TransceiverType::Qsfp: return "QSFP";
+	case TransceiverType::Sfp: return "SFP";
+	case TransceiverType::Csfp: return "CSFP";
+	default:
+		return "<unknown>";
+	}
+}
+
+constexpr inline
+const char* AsString(TransceiverTechnology tech)
+{
+	using enum TransceiverTechnology;
+	switch (tech) {
+	case Vcsel850nm: return "850 nm VCSEL";
+	case Vcsel1310nm: return "1310 nm VCSEL";
+	case Vcsel1550nm: return "1550 nm VCSEL";
+	case Fp1310nmFP: return "1310 nm FP";
+	case Dfb1310nm: return "1310 nm DFB";
+	case Dfb1550nm: return "1550 nm DFB";
+	case Eml1310nm: return "1310 nm EML";
+	case Eml1550nm: return "1550 nm EML";
+	case Others: return "Others";
+	case Dfb1490nm: return "1490 nm DFB";
+	case CopperCableUnequalized: return "Copper cable unequalized";
+	case CopperCablePassiveEqualized: return "Copper cable passive equalized";
+	case CopperCableNearFarEndLimitActive: return "Copper cable, near and far end limiting active equalizers";
+	case CopperCableFarEndLimitActive: return "Copper cable, far end limiting active equalizers";
+	case CopperCableNearEndLimitActive: return "Copper cable, near end limiting active equalizers";
+	case CopperCableLinearActive: return "Copper cable, linear active equalizers";
+	default:
+		return "<unknown>";
+	}
+}
+
+
 } // Adnacom::Api namespace
