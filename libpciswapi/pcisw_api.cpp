@@ -17,6 +17,9 @@
 void LrpcFreeMemory(void* ptr);
 HRESULT LrpcConnect();
 
+using ErrCode = Adnacom::Api::ErrorCode;
+
+
 // String Utilities
 inline
 std::string bstr2string(BSTR bstr)
@@ -153,6 +156,7 @@ HRESULT LrpcConnect()
 
 	Gl.bindHandle = bindHandle;
 	trace("IPC connection created! BindHandle %p", bindHandle);
+
 	return S_OK;
 }
 
@@ -176,6 +180,43 @@ HRESULT ApiGetPortInfo(const wchar_t* portPath, unsigned infoType, byte*& outBuf
 {
 	auto pathBstr = ::SysAllocString(portPath);
 	HRESULT hr = Gl.rpcCall(PciswGetPortInfo, pathBstr, infoType, &outBufferSize, &outBuffer);
+	::SysFreeString(pathBstr);
+	return hr;
+}
+
+HRESULT ApiGetAdapterProperty(const wchar_t* adapterId, unsigned infoType, byte*& outBuffer, unsigned& outBufferSize)
+{
+	auto pathBstr = ::SysAllocString(adapterId);
+	HRESULT hr = Gl.rpcCall(PciswGetAdapterProperty, pathBstr, infoType, &outBufferSize, &outBuffer);
+	::SysFreeString(pathBstr);
+	return hr;
+}
+
+HRESULT ApiGetPortInfoByIndex(const wchar_t* adapterId, unsigned portIndex, unsigned infoType, byte*& outBuffer, unsigned& outBufferSize)
+{
+	auto pathBstr = ::SysAllocString(adapterId);
+	HRESULT hr = Gl.rpcCall(PciswGetPortInfoByIndex, pathBstr, portIndex, infoType, &outBufferSize, &outBuffer);
+	::SysFreeString(pathBstr);
+	return hr;
+}
+
+HRESULT ApiGetBoardType(const wchar_t* adapterId, std::string& outBoardTypeString)
+{
+	auto pathBstr = ::SysAllocString(adapterId);
+	BSTR boardTypeBstr = nullptr;
+	HRESULT hr = Gl.rpcCall(PciswGetAdapterBoardType, pathBstr, &boardTypeBstr);
+	::SysFreeString(pathBstr);
+	if (boardTypeBstr) {
+		outBoardTypeString = bstr2string(boardTypeBstr);
+		::SysFreeString(boardTypeBstr);
+	}
+	return hr;
+}
+
+HRESULT ApiGetTransceiverProperty(const wchar_t* adapterId, unsigned transceiverIndex, unsigned infoType, byte*& outBuffer, unsigned& outBufferSize)
+{
+	auto pathBstr = ::SysAllocString(adapterId);
+	HRESULT hr = Gl.rpcCall(PciswGetTransceiverProperty, pathBstr, transceiverIndex, infoType, &outBufferSize, &outBuffer);
 	::SysFreeString(pathBstr);
 	return hr;
 }
@@ -431,6 +472,43 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 
 } // Ipc namespace
 
+ErrCode copyResultToBuffer_(void* dst, uint32_t& dstSize, const void* src, uint32_t srcSize)
+{
+	if (!dst) {
+		dstSize = srcSize;
+		return ErrCode::InvalidParameter;
+	}
+
+	uint32_t dataSize = srcSize;
+	if (dstSize < dataSize)
+		dataSize = dstSize;
+
+	memcpy(dst, src, dataSize);
+
+	// Write minimum required buffer size to `dstSize`.
+	return ErrCode::Ok;
+}
+
+ErrCode hresult2Err_(HRESULT hr)
+{
+	switch (hr) {
+	case E_OUTOFMEMORY:
+		return ErrCode::OutOfMemory;
+	case E_INVALIDARG:
+		return ErrCode::InvalidParameter;
+	case HRESULT_FROM_WIN32(ERROR_NOT_FOUND):
+	case NTE_NOT_FOUND:
+		return ErrCode::NotFound;
+	}
+	return ErrCode::GenericFailure;
+}
+ErrCode hresult2Err_(HRESULT hr, ErrCode* outErrCode)
+{
+	auto result = hresult2Err_(hr);
+	if (outErrCode)
+		*outErrCode = result;
+	return result;
+}
 
 /// \region API Implementation
 
@@ -438,66 +516,225 @@ namespace Adnacom::Api {;
 
 
 /*static*/
-std::vector<HostAdapterId> HostAdapter::GetAdapterIds()
+std::vector<AdapterId> Adapter::GetAdapterIds()
 {
 	return Ipc::getAdIds_().value_or({}); // Return empty vector on error.
 }
 
-HostAdapter::HostAdapter(const HostAdapterId& id) : id_{id}
+struct Adapter::Impl
 {
+	Impl(const AdapterId& id) : myid_{ string2ws(id) }
+	{
+	}
+	Impl(const Adapter::Impl&) = default;
+	Impl(Impl&&) = default;
+
+	int GetPortCount() const
+	{
+		auto result = Ipc::getAdPorts_(myid_.c_str());
+		if (!result.has_value()) {
+			traceErr("GetAdapters() -> %d", result.error());
+			return -1;
+		}
+
+		return static_cast<int>(result->size());
+	}
+
+	bool GetPortInfo(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/)
+	{
+		auto result = Ipc::getAdPorts_(myid_.c_str());
+		if (!result) {
+			traceErr("GetPortInfo: failed to enumerate ports! Error %d", result.error());
+			hresult2Err_(result.error(), resultCode);
+			return false;
+		}
+		auto& ports = *result;
+		if (ports.empty()) {
+			traceErr("GetPortInfo: no ports on adapter '%ws'", myid_.c_str());
+			if (resultCode)
+				*resultCode = ErrCode::NotFound;
+			return false;
+		}
+
+		if (portIndex >= (int)ports.size()) {
+			traceErr("GetPortInfo(): invalid port index %d; port count: %d", portIndex, (int)ports.size());
+			if (resultCode)
+				*resultCode = ErrCode::NotFound;
+			return false;
+		}
+
+		byte* info = nullptr;
+		unsigned infoSize = bufferSize;
+		HRESULT hr = ApiGetPortInfoByIndex(myid_.c_str(), portIndex, static_cast<unsigned>(infoType), info, infoSize);
+		if (SUCCEEDED(hr)) {
+			// v2 API is available. Good!
+			trace("GetPortInfo(): got port info by index %d", portIndex);
+		} else {
+			const auto& portId = ports[portIndex];
+			hr = ApiGetPortInfo(string2ws(portId).c_str(), static_cast<unsigned>(infoType), info, infoSize);
+			trace("GetPortInfo(): got port info by path %ws", portId.c_str());
+		}
+
+		if (FAILED(hr) || !info) {
+			traceErr("GetPortInfo(index %d) -> %#x", portIndex, hr);
+			hresult2Err_(hr, resultCode);
+			return false;
+		}
+
+		ErrorCode err = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
+
+		LrpcFreeMemory(info);
+
+		if (resultCode)
+			*resultCode = err;
+		return err == ErrorCode::Ok;
+	}
+
+	bool GetProperty(AdapterProperty infoType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/)
+	{
+		byte* info = nullptr;
+		unsigned infoSize = bufferSize;
+		HRESULT hr = ApiGetAdapterProperty(myid_.c_str(), static_cast<unsigned>(infoType), info, infoSize);
+		if (FAILED(hr) || !info) {
+			traceErr("GetAdProperty('%ws') -> %#x", id_(), hr);
+			hresult2Err_(hr, resultCode);
+			return false;
+		}
+
+		ErrorCode err = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
+
+		LrpcFreeMemory(info);
+
+		if (resultCode)
+			*resultCode = err;
+		return err == ErrorCode::Ok;
+	}
+
+	AdapterType GetAdapterType() const
+	{
+		std::string boardString;
+		HRESULT hr = ApiGetBoardType(myid_.c_str(), boardString);
+		if (FAILED(hr))
+			return AdapterType::Unknown;
+
+		using enum AdapterType;
+		constexpr std::pair<const char*, AdapterType> boardTypeMap[] {
+			{"H18", H18},
+			{"R34", R34},
+			{"H14", H14},
+			{"H12", H12},
+			{"H3", H3},
+		};
+
+		for (const auto& e : boardTypeMap) {
+			if (boardString == e.first)
+				return e.second;
+		}
+
+		// Couldn't match the board ID.
+		return AdapterType::Unknown;
+	}
+
+	bool GetTransceiverProperty(int transceiverIndex, AdapterTransceiverProperty propType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/)
+	{
+		byte* info = nullptr;
+		unsigned infoSize = bufferSize;
+		HRESULT hr = ApiGetTransceiverProperty(myid_.c_str(), transceiverIndex, static_cast<unsigned>(propType), info, infoSize);
+		if (FAILED(hr) || !info) {
+			traceErr("GetAdProperty('%ws') -> %#x", id_(), hr);
+			hresult2Err_(hr, resultCode);
+			return false;
+		}
+
+		ErrorCode err = copyResultToBuffer_(outBuffer, bufferSize, info, infoSize);
+
+		LrpcFreeMemory(info);
+
+		if (resultCode)
+			*resultCode = err;
+		return err == ErrorCode::Ok;
+	}
+
+
+protected:
+	std::wstring myid_;
+
+	const wchar_t* id_() { return myid_.c_str(); }
+};
+
+Adapter::Adapter(const AdapterId& id) : impl_{new Impl(id)} { }
+
+Adapter::Adapter(const Adapter& other) : impl_{other.impl_ ? new Impl(*other.impl_) : nullptr} { }
+Adapter::Adapter(Adapter&& other) : impl_{other.impl_}
+{
+	// "Steal" impl from other.
+	other.impl_ = nullptr;
 }
 
-int HostAdapter::GetPortCount() const
+Adapter::~Adapter()
 {
-	auto result = Ipc::getAdPorts_(string2ws(id_).c_str());
-	if (!result.has_value()) {
-		traceErr("GetAdapters() -> %d", result.error());
+	delete impl_;
+}
+
+Adapter& Adapter::operator=(const Adapter& other)
+{
+	if (this != &other) {
+		if (impl_)
+			delete impl_;
+		impl_ = nullptr;
+		if (other.impl_)
+			impl_ = new Impl(*other.impl_);
+	}
+	return *this;
+}
+
+Adapter& Adapter::operator=(Adapter&& other)
+{
+	if (this != &other) {
+		if (impl_)
+			delete impl_;
+		impl_ = other.impl_;
+		other.impl_ = nullptr;
+	}
+	return *this;
+}
+
+int Adapter::GetPortCount() const
+{
+	if (!impl_)
 		return -1;
-	}
-
-	return  static_cast<int>(result->size());
+	return impl_->GetPortCount();
 }
 
-bool HostAdapter::GetPortInfo(int portIndex, HostAdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize)
+AdapterType Adapter::GetAdapterType() const
 {
-	auto result = Ipc::getAdPorts_(string2ws(id_).c_str());
+	if (!impl_)
+		return AdapterType::Unknown;
+	return impl_->GetAdapterType();
+}
 
-	if (!result) {
-		traceErr("GetPortInfo: failed to enumerate ports! Error %d", result.error());
+bool Adapter::GetPortProperty(int portIndex, AdapterPortProperty infoType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/) const
+{
+	if (!impl_)
 		return false;
-	}
-	auto& ports = *result;
-	if (ports.empty()) {
-		traceErr("GetPortInfo: no ports on adapter '%s'", id_.c_str());
+
+	return impl_->GetPortInfo(portIndex, infoType, outBuffer, bufferSize, resultCode);
+}
+
+bool Adapter::GetAdapterProperty(AdapterProperty infoType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/) const
+{
+	if (!impl_)
 		return false;
-	}
 
-	if (portIndex >= (int)ports.size()) {
-		traceErr("GetPortInfo(): invalid port index %d; port count: %d", portIndex, (int)ports.size());
+	return impl_->GetProperty(infoType, outBuffer, bufferSize, resultCode);
+}
+
+bool Adapter::GetTransceiverProperty(int transceiverIndex, AdapterTransceiverProperty transceiverPropertyType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode /*= nullptr*/) const
+{
+	if (!impl_)
 		return false;
-	}
 
-	const auto& portId = ports[portIndex];
-
-	byte* info = nullptr;
-	unsigned infoSize = bufferSize;
-	HRESULT hr = ApiGetPortInfo(string2ws(portId).c_str(), static_cast<unsigned>(infoType), info, infoSize);
-	if (FAILED(hr) || !info) {
-		traceErr("GetPortInfo(index %d) -> %#x", portIndex, hr);
-		return false;
-	}
-
-	bool succeeded = false;
-	if (outBuffer && bufferSize >= infoSize) {
-		memcpy(outBuffer, info, infoSize);
-		succeeded = true;
-	} else {
-		bufferSize = infoSize;
-	}
-
-	LrpcFreeMemory(info);
-
-	return succeeded;
+	return impl_->GetTransceiverProperty(transceiverIndex, transceiverPropertyType, outBuffer, bufferSize, resultCode);
 }
 
 } // Adnacom::Api namespace

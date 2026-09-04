@@ -10,6 +10,9 @@
     <ClInclude Include="..\include\pcisw\pcisw_api.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\pcisw\pcisw_defs.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ipc">
