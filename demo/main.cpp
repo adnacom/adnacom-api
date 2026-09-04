@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 				std::println(">> port {}: [!] ERROR {}", i, (int)status.error());
 		}
 
-		const int MaxTransceivers = 4;
+		const int MaxTransceivers = 2;
 
 		// Iterate over adapter's ports and print link speed for each of them.
 		for (int i = 0; i < MaxTransceivers; ++i) {
@@ -74,9 +74,11 @@ int main(int argc, char* argv[])
 			if (!caps)
 				break;
 
-			caps->capabilities;
-
-			std::println(">> transceiver {}> type: {}, technology: {}", i, (TransceiverType)caps->transceiverType, (TransceiverTechnology)caps->deviceTechnology);
+			if (caps->revisionNumber[0] == 0 && caps->revisionNumber[1] == 0 || (uint8_t)caps->capabilities == 0)
+				std::println(">> transceiver {}> (not present)", i);
+			else
+				std::println(">> transceiver {}> rev {}.{}, caps: {:x}, type: {}, technology: {}", i, caps->revisionNumber[0], caps->revisionNumber[1],
+					(unsigned)caps->capabilities, (TransceiverType)caps->transceiverType, (TransceiverTechnology)caps->deviceTechnology);
 		}
 	}
 
