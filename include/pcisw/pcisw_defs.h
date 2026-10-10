@@ -441,14 +441,13 @@ template <AdapterTransceiverProperty TrPr> using AdapterTransceiverPropertyDataT
 constexpr inline
 const char* AsString(AdapterType boardType)
 {
-	using enum AdapterType;
 	switch (boardType) {
-	case Unknown: return "unknown";
-	case H18: return "H18";
-	case R34: return "R34";
-	case H14: return "H14";
-	case H12: return "H12";
-	case H3: return "H3";
+	case AdapterType::Unknown: return "unknown";
+	case AdapterType::H18: return "H18";
+	case AdapterType::R34: return "R34";
+	case AdapterType::H14: return "H14";
+	case AdapterType::H12: return "H12";
+	case AdapterType::H3: return "H3";
 	default:
 		return "<unknown>";
 	}
@@ -457,10 +456,9 @@ const char* AsString(AdapterType boardType)
 constexpr inline
 const char* AsString(AdapterMode mode)
 {
-	using enum AdapterMode;
 	switch (mode) {
-	case Host: return "Host";
-	case Remote: return "Remote";
+	case AdapterMode::Host: return "Host";
+	case AdapterMode::Remote: return "Remote";
 	default:
 		return "<unknown>";
 	}
@@ -469,13 +467,12 @@ const char* AsString(AdapterMode mode)
 constexpr inline
 const char* AsString(AdapterBoardState state)
 {
-	using enum AdapterBoardState;
 	switch (state) {
-	case Standby: return "Standby";
-	case PoweringUp: return "PoweringUp";
-	case Reset: return "Reset";
-	case PexInit: return "PexInit";
-	case On: return "On";
+	case AdapterBoardState::Standby: return "Standby";
+	case AdapterBoardState::PoweringUp: return "PoweringUp";
+	case AdapterBoardState::Reset: return "Reset";
+	case AdapterBoardState::PexInit: return "PexInit";
+	case AdapterBoardState::On: return "On";
 	default:
 		return "<unknown>";
 	}
@@ -484,7 +481,6 @@ const char* AsString(AdapterBoardState state)
 constexpr inline
 const char* AsString(TransceiverType type)
 {
-	using enum TransceiverType;
 	switch (type) {
 	case TransceiverType::Qsfp: return "QSFP";
 	case TransceiverType::Sfp: return "SFP";
@@ -497,24 +493,23 @@ const char* AsString(TransceiverType type)
 constexpr inline
 const char* AsString(TransceiverTechnology tech)
 {
-	using enum TransceiverTechnology;
 	switch (tech) {
-	case Vcsel850nm: return "850 nm VCSEL";
-	case Vcsel1310nm: return "1310 nm VCSEL";
-	case Vcsel1550nm: return "1550 nm VCSEL";
-	case Fp1310nmFP: return "1310 nm FP";
-	case Dfb1310nm: return "1310 nm DFB";
-	case Dfb1550nm: return "1550 nm DFB";
-	case Eml1310nm: return "1310 nm EML";
-	case Eml1550nm: return "1550 nm EML";
-	case Others: return "Others";
-	case Dfb1490nm: return "1490 nm DFB";
-	case CopperCableUnequalized: return "Copper cable unequalized";
-	case CopperCablePassiveEqualized: return "Copper cable passive equalized";
-	case CopperCableNearFarEndLimitActive: return "Copper cable, near and far end limiting active equalizers";
-	case CopperCableFarEndLimitActive: return "Copper cable, far end limiting active equalizers";
-	case CopperCableNearEndLimitActive: return "Copper cable, near end limiting active equalizers";
-	case CopperCableLinearActive: return "Copper cable, linear active equalizers";
+	case TransceiverTechnology::Vcsel850nm: return "850 nm VCSEL";
+	case TransceiverTechnology::Vcsel1310nm: return "1310 nm VCSEL";
+	case TransceiverTechnology::Vcsel1550nm: return "1550 nm VCSEL";
+	case TransceiverTechnology::Fp1310nmFP: return "1310 nm FP";
+	case TransceiverTechnology::Dfb1310nm: return "1310 nm DFB";
+	case TransceiverTechnology::Dfb1550nm: return "1550 nm DFB";
+	case TransceiverTechnology::Eml1310nm: return "1310 nm EML";
+	case TransceiverTechnology::Eml1550nm: return "1550 nm EML";
+	case TransceiverTechnology::Others: return "Others";
+	case TransceiverTechnology::Dfb1490nm: return "1490 nm DFB";
+	case TransceiverTechnology::CopperCableUnequalized: return "Copper cable unequalized";
+	case TransceiverTechnology::CopperCablePassiveEqualized: return "Copper cable passive equalized";
+	case TransceiverTechnology::CopperCableNearFarEndLimitActive: return "Copper cable, near and far end limiting active equalizers";
+	case TransceiverTechnology::CopperCableFarEndLimitActive: return "Copper cable, far end limiting active equalizers";
+	case TransceiverTechnology::CopperCableNearEndLimitActive: return "Copper cable, near end limiting active equalizers";
+	case TransceiverTechnology::CopperCableLinearActive: return "Copper cable, linear active equalizers";
 	default:
 		return "<unknown>";
 	}

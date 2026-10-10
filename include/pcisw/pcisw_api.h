@@ -9,7 +9,10 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <expected>
+
+#if __cplusplus >= 202302L
+#	include <expected>
+#endif // C++23 available
 
 #include "pcisw_defs.h"
 
@@ -42,7 +45,7 @@ public:
 	 * Creates object for PCIe Adapter with a given ID.
 	 * \param[in] id Adapter ID. \see `AdapterId`
 	 */
-	Adapter(const AdapterId& id);
+	explicit Adapter(const AdapterId& id);
 	~Adapter();
 
 	// Copy/move
@@ -84,6 +87,7 @@ public:
 	 */
 	bool GetAdapterProperty(AdapterProperty propertyType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode = nullptr) const;
 
+#if __cplusplus >= 202302L
 	/*!
 	 * Reads adapter's property value.
 	 * Type of the property value is deduced automatically at compile time based on the property type `Pr`.
@@ -103,6 +107,7 @@ public:
 
 		return std::unexpected{err};
 	}
+#endif // C++23 or newer
 
 	/*!
 	 * Reads adapter port's property value.
@@ -126,6 +131,7 @@ public:
 	bool GetPortProperty(int portIndex, AdapterPortProperty propertyType, void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode = nullptr) const;
 
 
+#if __cplusplus >= 202302L
 	/*!
 	 * Reads adapter port's property value.
 	 * Type of the property value is deduced automatically at compile time based on the property type `Pr`.
@@ -146,6 +152,7 @@ public:
 
 		return std::unexpected{err};
 	}
+#endif // C++23 or newer
 
 	/*!
 	 * Reads property of adapter's transceiver.
@@ -169,6 +176,7 @@ public:
 	bool GetTransceiverProperty(int transceiverIndex, AdapterTransceiverProperty transceiverPropertyType,
 		void* outBuffer, uint32_t& bufferSize, ErrorCode* resultCode = nullptr) const;
 
+#if __cplusplus >= 202302L
 	/*!
 	 * Reads property of adapter's transceiver.
 	 * Type of the property value is deduced automatically at compile time based on the property type `Pr`.
@@ -189,6 +197,7 @@ public:
 
 		return std::unexpected{err};
 	}
+#endif // C++23 and newer
 
 
 protected:
