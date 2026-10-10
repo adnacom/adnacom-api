@@ -10,7 +10,7 @@
 #include <cstdio>
 #include <cassert>
 
-#include <expected>
+#include <optional>
 
 
 // FWD
@@ -266,8 +266,66 @@ void traceImpl_(const wchar_t* fmt, ...)
 
 // IPC WRAPPERS
 
+#if __cplusplus >= 202302L // Is C++23 supported?
 template<typename Ty>
 using Expected = std::expected<Ty, HRESULT>;
+#else // C++23 not available; hack together a replacement for std::expected.
+
+class Unexpected
+{
+public:
+	using value_type = HRESULT;
+
+	explicit Unexpected(HRESULT hr) : myval_{ hr } {}
+
+	HRESULT& value() { return myval_; }
+	const HRESULT& value() const { return myval_; }
+
+protected:
+	HRESULT myval_;
+};
+
+template <typename Ty>
+class Expected
+{
+public:
+	using value_type = Ty;
+
+	Expected(const Ty& val) : myval_{ val } {}
+	Expected(Ty&& val) : myval_{ std::move(val) } {}
+
+	Expected(const Unexpected& unex) : myhr_{unex.value()} {}
+
+	constexpr bool has_value() const noexcept { return myval_.has_value(); }
+	constexpr explicit operator bool() const noexcept { return has_value(); }
+
+	constexpr const Ty& value() const& { return myval_.value(); }
+	constexpr const Ty&& value() const && { return myval_.value(); }
+	constexpr Ty& value() & { return myval_.value(); }
+	constexpr Ty&& value() && { return myval_.value(); }
+
+	constexpr const Ty* operator->() const { return &myval_.value(); }
+	constexpr Ty* operator->() { return &myval_.value(); }
+
+	constexpr const auto& operator*() const& { return *myval_; }
+	constexpr auto&& operator*() && { return *myval_; }
+
+	constexpr const auto& error() const { return myhr_; }
+	constexpr auto& error() { return myhr_; }
+
+	template <typename Tz = std::remove_cv_t<Ty>>
+	constexpr auto value_or(Tz&& fallbackValue) const & { return myval_.value_or(std::forward<Tz>(fallbackValue)); }
+	template <typename Tz = std::remove_cv_t<Ty>>
+	constexpr auto value_or(Tz&& fallbackValue) && { return myval_.value_or(std::forward<Tz>(fallbackValue)); }
+
+
+protected:
+	std::optional<Ty> myval_;
+	HRESULT myhr_ = S_OK;
+};
+
+#endif // no C++23
+
 
 template <typename Et>
 struct SafearrayIterator
@@ -286,26 +344,28 @@ struct SafearrayIterator
 		}
 	}
 
-	template <typename This>
-	auto& operator*(this This&& self)
+	const Et& operator*() const
 	{
-		using Result = std::conditional_t<std::is_const_v<This>, const Et, Et>;
-
-		assert(self.sa_);
-		Result* ptr = nullptr;
-		HRESULT hr = ::SafeArrayPtrOfIndex(self.sa_, &self.idx_, (void**)&ptr);
+		assert(sa_);
+		const Et* ptr = nullptr;
+		HRESULT hr = ::SafeArrayPtrOfIndex(sa_, &idx_, (void**)&ptr);
+		assert(SUCCEEDED(hr) && ptr);
+		return *ptr;
+	}
+	Et& operator*()
+	{
+		assert(sa_);
+		Et* ptr = nullptr;
+		HRESULT hr = ::SafeArrayPtrOfIndex(sa_, &idx_, (void**)&ptr);
 		assert(SUCCEEDED(hr) && ptr);
 		return *ptr;
 	}
 
-	template <typename Self>
-	auto* operator->(this Self&& self)
-	{
-		return std::addressof(*self);
-	}
+	const Et* operator->() const	{ return std::addressof(**this); }
+	Et* operator->()	{ return std::addressof(**this); }
 
-	bool operator==(const SafearrayIterator& other) const = default;
-	bool operator!=(const SafearrayIterator& other) const = default;
+	bool operator==(const SafearrayIterator& other) const	{ return sa_ == other.sa_ && idx_ == other.idx_; }
+	bool operator!=(const SafearrayIterator& other) const	{ return sa_ != other.sa_ || idx_ != other.idx_; }
 	bool operator<(const SafearrayIterator& other) const
 	{
 		assert(sa_ == other.sa_);
@@ -422,11 +482,11 @@ Expected<std::vector<std::string>> getAdIds_()
 	SafearrayWrapper<BSTR> bstrIds = adsa;
 	if (FAILED(hr)) {
 		traceErr("GetAdapters() -> hr %#x", hr);
-		return std::unexpected(hr);
+		return Unexpected(hr);
 	}
 	if (bstrIds.dims() != 1 || bstrIds.vartype() != VT_BSTR) {
 		// Unexpected element type, fail the call.
-		return std::unexpected(E_INVALID_PROTOCOL_FORMAT);
+		return Unexpected(E_INVALID_PROTOCOL_FORMAT);
 	}
 
 	const auto count = bstrIds.size();
@@ -442,7 +502,7 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 {
 	auto* adIdBstr = ::SysAllocString(adId);
 	if (!adIdBstr) {
-		return std::unexpected(E_OUTOFMEMORY);
+		return Unexpected(E_OUTOFMEMORY);
 	}
 
 	SAFEARRAY* ptsa = nullptr;
@@ -451,12 +511,12 @@ Expected<std::vector<std::string>> getAdPorts_(const wchar_t* adId)
 	SafearrayWrapper<BSTR> portsSa = ptsa;
 	if (FAILED(hr)) {
 		traceErr("GetAdapterPorts() -> hr %#x", hr);
-		return std::unexpected(hr);
+		return Unexpected(hr);
 	}
 
 	// Check if returned safearray has the expected format.
 	if (portsSa.dims() != 1 || portsSa.vartype() != VT_BSTR) {
-		return std::unexpected(E_INVALID_PROTOCOL_FORMAT);
+		return Unexpected(E_INVALID_PROTOCOL_FORMAT);
 	}
 
 	std::vector<std::string> ports;
@@ -617,13 +677,12 @@ struct Adapter::Impl
 		if (FAILED(hr))
 			return AdapterType::Unknown;
 
-		using enum AdapterType;
 		constexpr std::pair<const char*, AdapterType> boardTypeMap[] {
-			{"H18", H18},
-			{"R34", R34},
-			{"H14", H14},
-			{"H12", H12},
-			{"H3", H3},
+			{"H18", AdapterType::H18},
+			{"R34", AdapterType::R34},
+			{"H14", AdapterType::H14},
+			{"H12", AdapterType::H12},
+			{"H3", AdapterType::H3},
 		};
 
 		for (const auto& e : boardTypeMap) {
