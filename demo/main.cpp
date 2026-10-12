@@ -7,9 +7,12 @@
 #include <pcisw/pcisw_api.h>
 #include <pcisw/pcisw_defs.h>
 
-#include <print>
+#include <iostream>
 
 using Adnacom::Api::AsString;
+
+#if __cplusplus >= 202302L
+#include <print>
 
 template <typename Ty> concept ConvertibleToString = requires(const Ty& val)
 {
@@ -24,6 +27,18 @@ template <ConvertibleToString Ty> struct std::formatter<Ty> : std::formatter<con
 	}
 };
 
+#endif // C++23
+
+// Detect if a type can be converted to string via `AsString(val)`.
+template <typename Ty, typename = void> struct IsConvertibleToString : std::false_type {};
+template <typename Conv> struct IsConvertibleToString<Conv, std::enable_if_t<std::is_same_v<decltype(AsString(std::declval<Conv&>())), const char*>>> : std::true_type {};
+
+template <typename Ty, typename = std::enable_if_t<IsConvertibleToString<Ty>::value>> inline
+std::ostream& operator<<(std::ostream& os, Ty val)
+{
+	return os << AsString(val);
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -33,27 +48,26 @@ int main(int argc, char* argv[])
 	auto adapterIds = Adapter::GetAdapterIds();
 
 	if (adapterIds.empty()) {
-		std::println("No Adapters detected.");
+		std::cerr << "No Adapters detected." << std::endl;
 		return -1;
 	}
 
-	std::println("Available Host Adapters:");
+	std::cout << "Available Host Adapters:" << std::endl;
 
 	for (auto& id : adapterIds) {
 		// Create a Host Adapter object for each adapter.
 		Adapter ad{ id };
 		auto boardType = ad.GetAdapterType();
 
-		std::println("> {} [{}] -- {} ports", id, boardType, ad.GetPortCount());
+		std::cout << "> " << id << " [" << boardType << "] -- " << ad.GetPortCount() << " ports" << std::endl;
 
 		if (boardType == AdapterType::H18) {
 			H18Status adStatus;
 			unsigned statusSize = sizeof adStatus;
 			ad.GetAdapterProperty(AdapterProperty::BoardStatusH18, &adStatus, statusSize);
 
-			std::println("> H18: {} DS ports, US port = {}; {} DIP switches",
-				adStatus.downstreamPortCount, adStatus.upstreamPortNumber, (int)adStatus.dipSwCount);
-			std::println(">    | mode: {}, board state: {}", (AdapterMode)adStatus.mode, (AdapterBoardState)adStatus.boardState);
+			std::cout << "> H18: " << adStatus.downstreamPortCount << " DS ports, US port = " << adStatus.upstreamPortNumber << "; " << (int)adStatus.dipSwCount << " DIP switches" << std::endl;
+			std::cout << ">    | mode: " << (AdapterMode)adStatus.mode << ", board state: " << (AdapterBoardState)adStatus.boardState << std::endl;
 		}
 
 		// Iterate over adapter's ports and print link speed for each of them.
@@ -61,9 +75,9 @@ int main(int argc, char* argv[])
 			// This version of `GetPortProperty()` returns std::expected containing either underlying data structure or an error code.
 			auto status = ad.GetPortProperty<AdapterPortProperty::PortStatus>(i);
 			if (status)
-				std::println(">> port {}: link @ {} {}", i, (int)status->negotiatedLinkSpeed, (int)status->negotiatedLinkWidth);
+				std::cout << ">> port " << i << ": link @ " << (int)status->negotiatedLinkSpeed << " " << (int)status->negotiatedLinkWidth << std::endl;
 			else
-				std::println(">> port {}: [!] ERROR {}", i, (int)status.error());
+				std::cout << ">> port " << i << ": [!] ERROR " << (int)status.error() << std::endl;
 		}
 
 		const int MaxTransceivers = 2;
@@ -75,10 +89,11 @@ int main(int argc, char* argv[])
 				break;
 
 			if (caps->revisionNumber[0] == 0 && caps->revisionNumber[1] == 0 || (uint8_t)caps->capabilities == 0)
-				std::println(">> transceiver {}> (not present)", i);
+				std::cout << ">> transceiver " << i << "> (not present)" << std::endl;
 			else
-				std::println(">> transceiver {}> rev {}.{}, caps: {:x}, type: {}, technology: {}", i, caps->revisionNumber[0], caps->revisionNumber[1],
-					(unsigned)caps->capabilities, (TransceiverType)caps->transceiverType, (TransceiverTechnology)caps->deviceTechnology);
+				std::cout << ">> transceiver " << i << "> rev " << caps->revisionNumber[0] << "." << caps->revisionNumber[1]
+					<< ", caps: " << std::hex << (unsigned)caps->capabilities << std::dec << ", type: " << (TransceiverType)caps->transceiverType
+					<< ", technology: " << (TransceiverTechnology)caps->deviceTechnology << std::endl;
 		}
 	}
 
