@@ -23,6 +23,7 @@
     <ClCompile Include="$(IntDir)pcisw_api_lrpc_c.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\pcisw\expected.hxx" />
     <ClInclude Include="..\include\pcisw\pcisw_api.h" />
     <ClInclude Include="..\include\pcisw\pcisw_defs.h" />
   </ItemGroup>
