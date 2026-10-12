@@ -10,10 +10,10 @@
 #include <cstdio>
 #include <cassert>
 
-#include <optional>
+#include "pcisw/expected.hxx"
 
 
-// FWD
+ // FWD
 void LrpcFreeMemory(void* ptr);
 HRESULT LrpcConnect();
 
@@ -266,67 +266,6 @@ void traceImpl_(const wchar_t* fmt, ...)
 
 // IPC WRAPPERS
 
-#if __cplusplus >= 202302L // Is C++23 supported?
-template<typename Ty>
-using Expected = std::expected<Ty, HRESULT>;
-#else // C++23 not available; hack together a replacement for std::expected.
-
-class Unexpected
-{
-public:
-	using value_type = HRESULT;
-
-	explicit Unexpected(HRESULT hr) : myval_{ hr } {}
-
-	HRESULT& value() { return myval_; }
-	const HRESULT& value() const { return myval_; }
-
-protected:
-	HRESULT myval_;
-};
-
-template <typename Ty>
-class Expected
-{
-public:
-	using value_type = Ty;
-
-	Expected(const Ty& val) : myval_{ val } {}
-	Expected(Ty&& val) : myval_{ std::move(val) } {}
-
-	Expected(const Unexpected& unex) : myhr_{unex.value()} {}
-
-	constexpr bool has_value() const noexcept { return myval_.has_value(); }
-	constexpr explicit operator bool() const noexcept { return has_value(); }
-
-	constexpr const Ty& value() const& { return myval_.value(); }
-	constexpr const Ty&& value() const && { return myval_.value(); }
-	constexpr Ty& value() & { return myval_.value(); }
-	constexpr Ty&& value() && { return myval_.value(); }
-
-	constexpr const Ty* operator->() const { return &myval_.value(); }
-	constexpr Ty* operator->() { return &myval_.value(); }
-
-	constexpr const auto& operator*() const& { return *myval_; }
-	constexpr auto&& operator*() && { return *myval_; }
-
-	constexpr const auto& error() const { return myhr_; }
-	constexpr auto& error() { return myhr_; }
-
-	template <typename Tz = std::remove_cv_t<Ty>>
-	constexpr auto value_or(Tz&& fallbackValue) const & { return myval_.value_or(std::forward<Tz>(fallbackValue)); }
-	template <typename Tz = std::remove_cv_t<Ty>>
-	constexpr auto value_or(Tz&& fallbackValue) && { return myval_.value_or(std::forward<Tz>(fallbackValue)); }
-
-
-protected:
-	std::optional<Ty> myval_;
-	HRESULT myhr_ = S_OK;
-};
-
-#endif // no C++23
-
-
 template <typename Et>
 struct SafearrayIterator
 {
@@ -472,6 +411,9 @@ struct SafearrayWrapper
 protected:
 	SAFEARRAY* mysa_ = nullptr;
 };
+
+template <typename Ty> using Expected = Adnacom::Api::Expected<Ty, HRESULT>;
+using Unexpected = Adnacom::Api::Unexpected<HRESULT>;
 
 namespace Ipc {;
 
