@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 			unsigned statusSize = sizeof adStatus;
 			ad.GetAdapterProperty(AdapterProperty::BoardStatusH18, &adStatus, statusSize);
 
-			std::cout << "> H18: " << adStatus.downstreamPortCount << " DS ports, US port = " << adStatus.upstreamPortNumber << "; " << (int)adStatus.dipSwCount << " DIP switches" << std::endl;
+			std::cout << "> H18: " << static_cast<unsigned>(adStatus.downstreamPortCount) << " DS ports, US port = " << static_cast<unsigned>(adStatus.upstreamPortNumber) << "; " << static_cast<unsigned>(adStatus.dipSwCount) << " DIP switches" << std::endl;
 			std::cout << ">    | mode: " << (AdapterMode)adStatus.mode << ", board state: " << (AdapterBoardState)adStatus.boardState << std::endl;
 		}
 
