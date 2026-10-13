@@ -60,9 +60,9 @@ public:
 	constexpr explicit operator bool() const noexcept { return has_value(); }
 
 	constexpr const Ty& value() const& { return myval_.value(); }
-	constexpr const Ty&& value() const&& { return myval_.value(); }
+	constexpr const Ty&& value() const&& { return std::move(myval_).value(); }
 	constexpr Ty& value()& { return myval_.value(); }
-	constexpr Ty&& value()&& { return myval_.value(); }
+	constexpr Ty&& value()&& { return std::move(myval_).value(); }
 
 	constexpr const Ty* operator->() const { return &myval_.value(); }
 	constexpr Ty* operator->() { return &myval_.value(); }
