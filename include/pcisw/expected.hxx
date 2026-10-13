@@ -23,6 +23,8 @@ using Unexpected = std::unexpected<Err>;
 
 #else // C++23 not available; hack together a simple replacement for `std::expected`.
 #include <optional>
+#include <type_traits>
+#include <utility>
 
 namespace Adnacom::Api {
 
