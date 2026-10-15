@@ -39,7 +39,7 @@
 
   <!-- If not set otherwise, default to C++17. -->
   <PropertyGroup>
-    <PciswCxxStandard Condition="'$(PciswCxxStandard)' == ''">stdcpp17</PciswCxxStandard>
+    <PciswApiCxxStandard Condition="'$(PciswApiCxxStandard)' == ''">stdcpp17</PciswApiCxxStandard>
   </PropertyGroup>
   
   <ItemDefinitionGroup>
@@ -48,7 +48,7 @@
     </Lib>
     <ClCompile>
       <RuntimeLibrary Condition="'$(PciswApiRtLib_)' != ''">$(PciswApiRtLib_)</RuntimeLibrary>
-      <LanguageStandard Condition="'$(PciswCxxStandard)' != ''">$(PciswCxxStandard)</LanguageStandard>
+      <LanguageStandard Condition="'$(PciswApiCxxStandard)' != ''">$(PciswApiCxxStandard)</LanguageStandard>
       <UseFullPaths>false</UseFullPaths>
     </ClCompile>
     <Midl>

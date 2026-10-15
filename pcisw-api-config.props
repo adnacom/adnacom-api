@@ -14,8 +14,7 @@
     <!-- Uncomment this to override the runtime library linkage type used by pcisw-api.
     <PciswApiRuntimeLib>Static</PciswApiRuntimeLib>
     -->
-    <!-- Set library-internal C++ language standard to C++23. If not set, C++17 is used by default.
-    <PciswCxxStandard>stdcpp23</PciswCxxStandard>
-    -->
+    <!-- Set library-internal C++ language standard to C++23. If not set, C++17 is used by default. -->
+    <PciswApiCxxStandard>stdcpp23</PciswApiCxxStandard>
   </PropertyGroup>
 </Project>

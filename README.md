@@ -56,7 +56,7 @@ To apply a custom configuration, create a `pcisw-api-config.props` in your proje
   * `MultiThreadedDebug`/`MultiThreadedDebugDLL`/`MultiThreaded`/`MultiThreadedDLL` (same as `ClCompile`/`RuntimeLibrary`)
   * `Static`: use `MultiThreadedDebug` for Debug builds, and `MultiThreaded` for Release
   * `Dynamic`: use `MultiThreadedDebugDLL` for Debug builds, and `MultiThreadedDLL` for Release
-* `PciswCxxStandard` (override C++ language standard):
+* `PciswApiCxxStandard` (override C++ language standard):
   * `stdcpp17`: C++17
   * `stdcpp20`: C++20
   * `stdcpp23`: C++23 (currently a preview version)
