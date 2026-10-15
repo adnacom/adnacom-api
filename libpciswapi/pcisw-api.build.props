@@ -5,10 +5,18 @@
     <Import Project="..\shared\shared_cfg.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+
+  <!-- Output paths override. -->
+  <PropertyGroup>
+    <OutDir Condition="'$(PciswApiOutDir)' != ''">$([MSBuild]::EnsureTrailingSlash('$(PciswApiOutDir)'))</OutDir>
+    <IntDir Condition="'$(PciswApiIntDir)' != ''">$([MSBuild]::EnsureTrailingSlash('$(PciswApiIntDir)'))</IntDir>
+  </PropertyGroup>
+
   <PropertyGroup>
     <IncludePath>$(IntDir);$(ProjectDir)..\include;$(IncludePath)</IncludePath>
     <PublicIncludeDirectories>$(ProjectDir)..\include\</PublicIncludeDirectories>
   </PropertyGroup>
+
   <!-- If `PciswApiRuntimeLib` is set, use it to override the runtime library type used to build the API lib. -->
   <Choose>
     <When Condition="'$(PciswApiRuntimeLib)' == 'Static'">
@@ -29,6 +37,12 @@
       </PropertyGroup>
     </Otherwise>
   </Choose>
+
+  <!-- If not set otherwise, default to C++17. -->
+  <PropertyGroup>
+    <PciswCxxStandard Condition="'$(PciswCxxStandard)' == ''">stdcpp17</PciswCxxStandard>
+  </PropertyGroup>
+  
   <ItemDefinitionGroup>
     <Lib>
       <AdditionalDependencies>rpcrt4.lib</AdditionalDependencies>
@@ -36,7 +50,19 @@
     <ClCompile>
       <RuntimeLibrary Condition="'$(PciswApiRtLib_)' != ''">$(PciswApiRtLib_)</RuntimeLibrary>
       <LanguageStandard Condition="'$(PciswCxxStandard)' != ''">$(PciswCxxStandard)</LanguageStandard>
+      <UseFullPaths>false</UseFullPaths>
     </ClCompile>
+    <Midl>
+      <OutputDirectory>$(IntDir)</OutputDirectory>
+    </Midl>
+    <Midl>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+    </Midl>
   </ItemDefinitionGroup>
   <ItemGroup />
+  
+  <!-- Diagnostics -->
+  <PropertyGroup>
+    <PciswBuildMsgImportance>high</PciswBuildMsgImportance>
+  </PropertyGroup>
 </Project>

@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Target Name="Echo build configuration" BeforeTargets="Build">
-    <Message Text="Pcisw API runtime library version override: $(PciswApiRuntimeLib)" Condition="'$(PciswApiRuntimeLib)' != ''" Importance="high"/>
-    <Message Text="Pcisw API C++ standard override: $(PciswCxxStandard)" Condition="'$(PciswCxxStandard)' != ''" Importance="high"/>
+    <Message Text="Pcisw API runtime library version override: $(PciswApiRuntimeLib)" Condition="'$(PciswApiRuntimeLib)' != ''" Importance="$(PciswBuildMsgImportance)"/>
+    <Message Text="Pcisw API C++ standard override: $(PciswCxxStandard)" Condition="'$(PciswCxxStandard)' != ''" Importance="$(PciswBuildMsgImportance)"/>
+
+    <Message Text="Pcisw API C++ output path: $(PciswApiOutDir)" Condition="'$(PciswApiOutDir)' != ''" Importance="$(PciswBuildMsgImportance)"/>
+    <Message Text="Pcisw API C++ intermediate path: $(PciswApiIntDir)" Condition="'$(PciswApiIntDir)' != ''" Importance="$(PciswBuildMsgImportance)"/>
   </Target>
 </Project>

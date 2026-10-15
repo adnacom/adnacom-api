@@ -60,3 +60,5 @@ To apply a custom configuration, create a `pcisw-api-config.props` in your proje
   * `stdcpp17`: C++17
   * `stdcpp20`: C++20
   * `stdcpp23`: C++23 (currently a preview version)
+* `PciswApiOutDir` - build output directory path
+* `PciswApiIntDir` - intermediate ("obj") directory path
