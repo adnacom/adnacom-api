@@ -44,3 +44,19 @@ msbuild /p:Platform=x64,Configuration=Release pcisw-api.slnx
 ```
 
 Other build systems may also be used, however, additional build scripts are not currently provided in this repository. Please note that a MIDL compiler must be used during build to generate the RPC client stub code.
+
+### Build Configuration
+
+When the library is built as part of another project using Msbuild or Visual Studio,
+it is sometimes required to use a specific Runtime Library type. 
+
+`pcisw-api` library can be configured to match desired Runtime Library type and other build settings.
+To apply a custom configuration, create a `pcisw-api-config.props` in your project's solution directory and set the following properties ([pcisw-api-config.props](\pcisw-api-config.props) from this repository may be used as a reference):
+* `PciswApiRuntimeLib`(override C++ runtime library type):
+  * `MultiThreadedDebug`/`MultiThreadedDebugDLL`/`MultiThreaded`/`MultiThreadedDLL` (same as `ClCompile`/`RuntimeLibrary`)
+  * `Static`: use `MultiThreadedDebug` for Debug builds, and `MultiThreaded` for Release
+  * `Dynamic`: use `MultiThreadedDebugDLL` for Debug builds, and `MultiThreadedDLL` for Release
+* `PciswCxxStandard` (override C++ language standard):
+  * `stdcpp17`: C++17
+  * `stdcpp20`: C++20
+  * `stdcpp23`: C++23 (currently a preview version)

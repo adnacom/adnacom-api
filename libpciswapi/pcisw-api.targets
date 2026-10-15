@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="Echo build configuration" BeforeTargets="Build">
+    <Message Text="Pcisw API runtime library version override: $(PciswApiRuntimeLib)" Condition="'$(PciswApiRuntimeLib)' != ''" Importance="high"/>
+    <Message Text="Pcisw API C++ standard override: $(PciswCxxStandard)" Condition="'$(PciswCxxStandard)' != ''" Importance="high"/>
+  </Target>
+</Project>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Build output paths configuration -->
+  <PropertyGroup>
+    <PciswApiOutDirRoot>$(SolutionDir)bin</PciswApiOutDirRoot>
+    <PciswApiIntDirRoot>$(SolutionDir).temp\$(MSBuildProjectName)\</PciswApiIntDirRoot>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PciswApiOutDir>$([MSBuild]::EnsureTrailingSlash('$(OutDirRoot)'))$(Platform)\$(Configuration)\</PciswApiOutDir>
+    <PciswApiIntDir>$(IntDirRoot)$(Platform)\$(Configuration)\</PciswApiIntDir>
+  </PropertyGroup>
+  <!-- Runtime Library configuration -->
+  <PropertyGroup>
+    <!--
+    <PciswApiRuntimeLib>Static</PciswApiRuntimeLib>
+    -->
+    <PciswCxxStandard>stdcpp23</PciswCxxStandard>
+  </PropertyGroup>
+</Project>

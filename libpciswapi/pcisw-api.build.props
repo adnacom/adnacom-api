@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets">
+    <Import Project="$(SolutionDir)pcisw-api-config.props" Condition="Exists('$(SolutionDir)pcisw-api-config.props')"/>
     <Import Project="..\shared\shared_cfg.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -8,10 +9,34 @@
     <IncludePath>$(IntDir);$(ProjectDir)..\include;$(IncludePath)</IncludePath>
     <PublicIncludeDirectories>$(ProjectDir)..\include\</PublicIncludeDirectories>
   </PropertyGroup>
+  <!-- If `PciswApiRuntimeLib` is set, use it to override the runtime library type used to build the API lib. -->
+  <Choose>
+    <When Condition="'$(PciswApiRuntimeLib)' == 'Static'">
+      <PropertyGroup>
+        <PciswApiRtLib_ Condition="$(Configuration.Contains('Debug'))">MultiThreadedDebug</PciswApiRtLib_>
+        <PciswApiRtLib_ Condition="!$(Configuration.Contains('Debug'))">MultiThreaded</PciswApiRtLib_>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(PciswApiRuntimeLib)' == 'Dynamic'">
+      <PropertyGroup>
+        <PciswApiRtLib_ Condition="$(Configuration.Contains('Debug'))">MultiThreadedDebugDLL</PciswApiRtLib_>
+        <PciswApiRtLib_ Condition="!$(Configuration.Contains('Debug'))">MultiThreadedDLL</PciswApiRtLib_>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup Condition="'$(PciswApiRuntimeLib)' != ''">
+        <PciswApiRtLib_>$(PciswApiRuntimeLib)</PciswApiRtLib_>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
   <ItemDefinitionGroup>
     <Lib>
       <AdditionalDependencies>rpcrt4.lib</AdditionalDependencies>
     </Lib>
+    <ClCompile>
+      <RuntimeLibrary Condition="'$(PciswApiRtLib_)' != ''">$(PciswApiRtLib_)</RuntimeLibrary>
+      <LanguageStandard Condition="'$(PciswCxxStandard)' != ''">$(PciswCxxStandard)</LanguageStandard>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup />
 </Project>
