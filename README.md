@@ -52,7 +52,7 @@ it is sometimes required to use a specific Runtime Library type.
 
 `pcisw-api` library can be configured to match desired Runtime Library type and other build settings.
 To apply a custom configuration, create a `pcisw-api-config.props` in your project's solution directory and set the following properties ([pcisw-api-config.props](\pcisw-api-config.props) from this repository may be used as a reference):
-* `PciswApiRuntimeLib`(override C++ runtime library type):
+* `PciswApiRuntimeLib` (override C++ runtime library type):
   * `MultiThreadedDebug`/`MultiThreadedDebugDLL`/`MultiThreaded`/`MultiThreadedDLL` (same as `ClCompile`/`RuntimeLibrary`)
   * `Static`: use `MultiThreadedDebug` for Debug builds, and `MultiThreaded` for Release
   * `Dynamic`: use `MultiThreadedDebugDLL` for Debug builds, and `MultiThreadedDLL` for Release
