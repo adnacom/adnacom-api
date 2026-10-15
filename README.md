@@ -1,8 +1,8 @@
-# Adnacom Host Adapter Diagnostics API
-`pcisw-api` library provides a C++ API to discover and interact with Adnacom PCI Express Host Adapter devices on Windows systems.
+# Adnacom Adapter Diagnostics API
+`pcisw-api` library provides a C++ API to discover and interact with Adnacom PCI Express Adapter devices on Windows systems.
 Its functionality includes:
-* enumerating Host Adapter devices
-* enumerating Host Adapter's ports
+* enumerating Adapter devices
+* enumerating Adapter's ports
 * reading port's properties
 
 ## Usage
@@ -15,21 +15,21 @@ Include the [<pcisw/pcisw_api.h>](https://github.com/adnacom/adnacom-api/blob/ma
 
 All library functions and types are enclosed in the `Adnacom::Api` namespace.
 
-`HostAdapter` is the central class of the API that represents Host Adapter instances. Static member function `HostAdapter::GetAdapterIds()` can be used to retrieve a list of available adapters:
+`Adapter` is the central class of the API that represents Adapter instances. Static member function `Adapter::GetAdapterIds()` can be used to retrieve a list of available adapters:
 ```c++
 using namespace Adnacom::Api;
 // List available adapters' IDs.
-auto adapterIds = HostAdapter::GetAdapterIds();
-// Create Host Adapter object.
+auto adapterIds = Adapter::GetAdapterIds();
+// Create an Adapter object.
 HostAdapter ad{adapterIds[0]};
 ```
 
-To read property data for a specific Host Adapter's port index, `HostAdapter::GetPortInfo()` should be used. To get the number of ports in a Host Adapter, call `HostAdapter::GetPortCount()`
+To read property data for a specific Adapter's port index, `Adapter::GetPortInfo()` should be used. To get the number of ports in an Adapter, call `Adapter::GetPortCount()`
 
 ```c++
 uint8_t buffer[BufferSize];
 unsigned bufferSize = sizeof buffer;
-bool ok = ad.GetPortInfo(portIndex, HostAdapterPortProperty::PortStatus, &status, bufferSize);
+bool ok = ad.GetPortInfo(portIndex, AdapterPortProperty::PortStatus, &status, bufferSize);
 ```
 
 See [demo/main.cpp](demo/main.cpp) for a complete example.
@@ -62,3 +62,8 @@ To apply a custom configuration, create a `pcisw-api-config.props` in your proje
   * `stdcpp23`: C++23 (currently a preview version)
 * `PciswApiOutDir` - build output directory path
 * `PciswApiIntDir` - intermediate ("obj") directory path
+
+It is also possible to pass these settings directly via MSBuild command line, e.g.:
+```cmd
+msbuild /p:Platform=x64,Configuration=Release solution.slnx /p:PciswApiRuntimeLib=Static
+```
