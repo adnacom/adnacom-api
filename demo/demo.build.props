@@ -1,18 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets">
-    <Import Project="$(SolutionDir)pcisw-api-config.props" />
+    <Import Project="..\libpciswapi\pcisw-api.build.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup>
-    <OutDir>$(PciswApiOutDir)\</OutDir>
-    <IntDir>$(PciswApiIntDir)\</IntDir>
-  </PropertyGroup>
-  <ItemDefinitionGroup>
-    <ClCompile>
-      <LanguageStandard Condition="'$(PciswApiCxxStandard)' != ''">$(PciswApiCxxStandard)</LanguageStandard>
-      <LanguageStandard Condition="'$(PciswApiCxxStandard)' == ''">stdcpp17</LanguageStandard>
-    </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemGroup />
 </Project>
