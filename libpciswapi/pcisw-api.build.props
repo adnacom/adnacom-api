@@ -1,17 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets">
-    <Import Project="..\shared\shared_cfg.props" />
+    <Import Project="$(SolutionDir)pcisw-api-config.props" Condition="Exists('$(SolutionDir)pcisw-api-config.props')"/>
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+
+  <!-- Output paths override. -->
+  <PropertyGroup>
+    <OutDir Condition="'$(PciswApiOutDir)' != ''">$([MSBuild]::EnsureTrailingSlash('$(PciswApiOutDir)'))</OutDir>
+    <IntDir Condition="'$(PciswApiIntDir)' != ''">$([MSBuild]::EnsureTrailingSlash('$(PciswApiIntDir)'))</IntDir>
+  </PropertyGroup>
+
   <PropertyGroup>
     <IncludePath>$(IntDir);$(ProjectDir)..\include;$(IncludePath)</IncludePath>
     <PublicIncludeDirectories>$(ProjectDir)..\include\</PublicIncludeDirectories>
   </PropertyGroup>
+
+  <!-- If `PciswApiRuntimeLib` is set, use it to override the runtime library type used to build the API lib. -->
+  <Choose>
+    <When Condition="'$(PciswApiRuntimeLib)' == 'Static'">
+      <PropertyGroup>
+        <PciswApiRtLib_ Condition="$(Configuration.Contains('Debug'))">MultiThreadedDebug</PciswApiRtLib_>
+        <PciswApiRtLib_ Condition="!$(Configuration.Contains('Debug'))">MultiThreaded</PciswApiRtLib_>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(PciswApiRuntimeLib)' == 'Dynamic'">
+      <PropertyGroup>
+        <PciswApiRtLib_ Condition="$(Configuration.Contains('Debug'))">MultiThreadedDebugDLL</PciswApiRtLib_>
+        <PciswApiRtLib_ Condition="!$(Configuration.Contains('Debug'))">MultiThreadedDLL</PciswApiRtLib_>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup Condition="'$(PciswApiRuntimeLib)' != ''">
+        <PciswApiRtLib_>$(PciswApiRuntimeLib)</PciswApiRtLib_>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+  <!-- If not set otherwise, default to C++17. -->
+  <PropertyGroup>
+    <PciswApiCxxStandard Condition="'$(PciswApiCxxStandard)' == ''">stdcpp17</PciswApiCxxStandard>
+  </PropertyGroup>
+  
   <ItemDefinitionGroup>
     <Lib>
       <AdditionalDependencies>rpcrt4.lib</AdditionalDependencies>
     </Lib>
+    <ClCompile>
+      <RuntimeLibrary Condition="'$(PciswApiRtLib_)' != ''">$(PciswApiRtLib_)</RuntimeLibrary>
+      <LanguageStandard Condition="'$(PciswApiCxxStandard)' != ''">$(PciswApiCxxStandard)</LanguageStandard>
+      <UseFullPaths>false</UseFullPaths>
+    </ClCompile>
+    <Midl>
+      <OutputDirectory>$(IntDir)</OutputDirectory>
+    </Midl>
+    <Midl>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+    </Midl>
   </ItemDefinitionGroup>
   <ItemGroup />
+  
+  <!-- Diagnostics -->
+  <PropertyGroup>
+    <!-- Build settings echo message importance. -->
+    <PciswBuildMsgImportance>normal</PciswBuildMsgImportance>
+  </PropertyGroup>
 </Project>
